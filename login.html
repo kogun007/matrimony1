@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In & Register | LivePartner Matrimony</title>
+  <meta name="description" content="Secure login portal with dynamic captcha and quick matrimony registration.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/layout.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <style>
+    .auth-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.25rem;
+      position: relative;
+    }
+    .auth-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-xl);
+      max-width: 480px;
+      width: 100%;
+      padding: 2.5rem;
+      box-shadow: var(--shadow-card);
+      position: relative;
+      z-index: 10;
+    }
+    .captcha-row {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+    .captcha-display-box {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--surface-alt);
+      padding: 0.25rem 0.5rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--surface-border);
+    }
+    .captcha-canvas {
+      border-radius: var(--radius-sm);
+      background: #f1f5f9;
+    }
+    .btn-toggle-password,
+    .btn-refresh-captcha {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.4rem;
+      border-radius: var(--radius-sm);
+    }
+    .btn-toggle-password:hover,
+    .btn-refresh-captcha:hover {
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+    .btn-toggle-password {
+      position: absolute;
+      right: 0.75rem;
+    }
+    .error-text {
+      font-size: 0.78rem;
+      color: var(--danger);
+      font-weight: 600;
+      min-height: 1rem;
+      display: block;
+      margin-top: 0.25rem;
+    }
+    .auth-divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 1.75rem 0;
+      color: var(--text-muted);
+      font-size: 0.825rem;
+      font-weight: 600;
+    }
+    .auth-divider::before,
+    .auth-divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid var(--surface-border);
+    }
+    .auth-divider span {
+      padding: 0 0.75rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="auth-wrapper">
+    <div class="ambient-glow glow-top-right"></div>
+    <div class="ambient-glow glow-bottom-left"></div>
+
+    <div class="auth-card">
+      
+      <!-- Brand & Header -->
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <a href="index.html" style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; margin-bottom: 0.75rem;">
+          <div class="brand-icon-wrapper" style="width: 42px; height: 42px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="url(#brand-grad-icon)" stroke="none"/>
+              <defs>
+                <linearGradient id="brand-grad-icon" x1="2" y1="3" x2="22" y2="21.35" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#6366f1"/>
+                  <stop offset="1" stop-color="#ec4899"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <span style="font-size: 1.4rem; font-weight: 800; background: var(--gradient-brand); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">LivePartner</span>
+        </a>
+        <h1 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.25rem;">
+          Welcome Back <span style="font-size: 1.25rem;">👋</span>
+        </h1>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">
+          Sign in to access your matches and connection requests.
+        </p>
+      </div>
+
+      <!-- Login Form -->
+      <form id="authLoginForm" novalidate onsubmit="handleLoginSubmit(event)">
+        
+        <!-- Username / Email -->
+        <div class="form-group" style="margin-bottom: 0.75rem;">
+          <label for="usernameInput" class="form-label">Username, Candidate ID or Email</label>
+          <div class="input-wrapper">
+            <span class="input-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </span>
+            <input 
+              type="text" 
+              id="usernameInput" 
+              class="form-input" 
+              placeholder="e.g. LPS-88421 or priya@example.com"
+              value="LPS-88421" 
+              required
+            >
+          </div>
+          <span class="error-text" id="usernameError"></span>
+        </div>
+
+        <!-- Password -->
+        <div class="form-group" style="margin-bottom: 0.75rem;">
+          <div class="form-label-row">
+            <label for="passwordInput" class="form-label">Password</label>
+            <a href="#forgot" onclick="window.toast.show('Password reset link sent to your registered email.', 'info')" style="font-size: 0.8rem; font-weight: 600; color: var(--primary);">Forgot?</a>
+          </div>
+          <div class="input-wrapper">
+            <span class="input-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            </span>
+            <input 
+              type="password" 
+              id="passwordInput" 
+              class="form-input" 
+              placeholder="••••••••••••"
+              value="demoPassword123" 
+              required
+            >
+            <button type="button" class="btn-toggle-password" id="togglePasswordBtn" aria-label="Toggle password visibility">
+              <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+          </div>
+          <span class="error-text" id="passwordError"></span>
+        </div>
+
+        <!-- Captcha Verification -->
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label for="captchaInput" class="form-label">Security Verification Code</label>
+          <div class="captcha-row">
+            <div class="input-wrapper" style="flex: 1;">
+              <span class="input-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              </span>
+              <input 
+                type="text" 
+                id="captchaInput" 
+                class="form-input" 
+                placeholder="Enter 5-digit code" 
+                maxlength="6"
+                autocomplete="off"
+                required
+              >
+            </div>
+
+            <div class="captcha-display-box">
+              <canvas id="captchaCanvas" width="110" height="38" class="captcha-canvas"></canvas>
+              <button type="button" id="refreshCaptchaBtn" class="btn-refresh-captcha" title="Refresh Captcha">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+              </button>
+            </div>
+          </div>
+          <span class="error-text" id="captchaError"></span>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1rem; font-weight: 700;">
+          <span>Sign In to Portal</span>
+        </button>
+
+      </form>
+
+      <div class="auth-divider">
+        <span>or create a new profile</span>
+      </div>
+
+      <!-- Quick Registration Request -->
+      <form id="quickSignupForm" onsubmit="handleQuickSignup(event)">
+        <div style="display: flex; gap: 0.5rem;">
+          <input type="email" id="signupEmailInput" class="form-input no-icon" placeholder="Enter your email to register" required style="font-size: 0.88rem;">
+          <button type="submit" class="btn btn-secondary" style="font-weight: 700; font-size: 0.88rem;">
+            <span>Register</span>
+          </button>
+        </div>
+      </form>
+
+      <div style="text-align: center; margin-top: 1.5rem; font-size: 0.825rem; color: var(--text-muted);">
+        <a href="index.html" style="color: var(--primary); font-weight: 600;">&larr; Back to Matrimony Portal</a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Reusable Components -->
+  <script src="js/components/toast.js"></script>
+  <script>
+    let currentCaptcha = '';
+
+    // Dynamic Captcha Generator with Canvas Distortion
+    function generateCaptcha() {
+      const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+      let code = '';
+      for (let i = 0; i < 5; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      currentCaptcha = code;
+
+      const canvas = document.getElementById('captchaCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      // Clear & Background
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#eef2ff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Noise lines
+      for (let i = 0; i < 3; i++) {
+        ctx.strokeStyle = '#c7d2fe';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+        ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+        ctx.stroke();
+      }
+
+      // Draw Characters
+      ctx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
+      ctx.fillStyle = '#4f46e5';
+      ctx.textBaseline = 'middle';
+
+      for (let i = 0; i < code.length; i++) {
+        const char = code[i];
+        const x = 14 + i * 18;
+        const y = canvas.height / 2 + (Math.random() * 4 - 2);
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate((Math.random() * 0.2) - 0.1);
+        ctx.fillText(char, 0, 0);
+        ctx.restore();
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      generateCaptcha();
+
+      document.getElementById('refreshCaptchaBtn').addEventListener('click', () => {
+        generateCaptcha();
+      });
+
+      // Toggle Password Visibility
+      const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+      const passwordInput = document.getElementById('passwordInput');
+      let isVisible = false;
+
+      togglePasswordBtn.addEventListener('click', () => {
+        isVisible = !isVisible;
+        passwordInput.type = isVisible ? 'text' : 'password';
+        togglePasswordBtn.innerHTML = isVisible
+          ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`
+          : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+      });
+    });
+
+    function handleLoginSubmit(e) {
+      e.preventDefault();
+      
+      const username = document.getElementById('usernameInput').value.trim();
+      const password = document.getElementById('passwordInput').value.trim();
+      const captcha = document.getElementById('captchaInput').value.trim().toUpperCase();
+
+      let hasError = false;
+
+      document.getElementById('usernameError').textContent = '';
+      document.getElementById('passwordError').textContent = '';
+      document.getElementById('captchaError').textContent = '';
+
+      if (!username) {
+        document.getElementById('usernameError').textContent = 'Please enter your username, ID or email';
+        hasError = true;
+      }
+
+      if (!password) {
+        document.getElementById('passwordError').textContent = 'Please enter your password';
+        hasError = true;
+      }
+
+      if (!captcha) {
+        document.getElementById('captchaError').textContent = 'Please enter the verification code';
+        hasError = true;
+      } else if (captcha !== currentCaptcha) {
+        document.getElementById('captchaError').textContent = 'Incorrect verification code. Please try again.';
+        generateCaptcha();
+        hasError = true;
+      }
+
+      if (hasError) return;
+
+      window.toast.show('Sign in successful! Redirecting to dashboard...', 'success');
+      setTimeout(() => {
+        window.location.href = 'index.html';
+      }, 1000);
+    }
+
+    function handleQuickSignup(e) {
+      e.preventDefault();
+      const email = document.getElementById('signupEmailInput').value.trim();
+      if (!email) return;
+
+      window.toast.show(`Registration invitation sent to ${email}!`, 'success');
+      document.getElementById('signupEmailInput').value = '';
+    }
+  </script>
+</body>
+</html>

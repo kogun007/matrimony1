@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LivePartner - Find Your Perfect Life Partner | Matrimony Portal</title>
+  <meta name="description" content="Discover verified matrimony profiles, find compatible life partners, and connect securely on LivePartner.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/layout.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+
+  <div class="app-shell">
+    <div class="ambient-glow glow-top-right"></div>
+    <div class="ambient-glow glow-bottom-left"></div>
+
+    <!-- Collapsible Navigation Mount -->
+    <div id="sidebar-mount"></div>
+
+    <!-- Main Content Area -->
+    <div class="app-main">
+      
+      <!-- Topbar -->
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <button type="button" class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle navigation drawer">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+
+          <div class="topbar-title-group">
+            <h1 class="topbar-page-title">Welcome back, Priya!</h1>
+            <span class="topbar-badge">ID: LPS-88421</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <a href="search.html" class="btn btn-secondary btn-sm" aria-label="Search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <span>Partner Search</span>
+          </a>
+          <a href="matches.html" class="btn btn-primary btn-sm" aria-label="Explore Matches">
+            <span>Daily Matches</span>
+          </a>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <main class="content-container">
+        
+        <!-- Dashboard Stats Grid -->
+        <section class="stats-grid" aria-label="Activity Summary">
+          <div class="stat-card">
+            <div class="stat-icon-wrapper stat-icon-primary">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">12</div>
+              <div class="stat-label">New Matches Today</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper stat-icon-accent">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">48</div>
+              <div class="stat-label">Profile Views This Week</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper stat-icon-success">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value" id="stat-interests-count">3</div>
+              <div class="stat-label">Interests Received</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper stat-icon-warning">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value" id="stat-shortlist-count">2</div>
+              <div class="stat-label">Shortlisted Profiles</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Quick Search & Match Banner -->
+        <section class="card" style="margin-bottom: 2.5rem; background: linear-gradient(135deg, #ffffff 0%, #fdf4f8 100%);">
+          <div class="card-body" style="padding: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+              <div>
+                <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.25rem;">
+                  Quick Partner Match
+                </h2>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">
+                  Filter candidates by Candidate ID or Age & Height preferences.
+                </p>
+              </div>
+              <a href="search.html" class="btn btn-outline-primary btn-sm">
+                <span>Advanced Search & Filters &rarr;</span>
+              </a>
+            </div>
+
+            <form id="quick-search-form" onsubmit="handleQuickSearch(event)" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; align-items: flex-end;">
+              <!-- Candidate ID -->
+              <div class="form-group">
+                <label for="dash-candidate-id" class="form-label">Candidate ID</label>
+                <div class="input-wrapper">
+                  <span class="input-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="3"></rect><line x1="7" y1="8" x2="17" y2="8"></line></svg>
+                  </span>
+                  <input type="text" id="dash-candidate-id" class="form-input" placeholder="e.g. LPS-40912">
+                </div>
+              </div>
+
+              <!-- Age Slider -->
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label for="dash-age-slider" class="form-label">Age</label>
+                  <span id="dash-age-val" class="current-val-badge">27 Yrs</span>
+                </div>
+                <input type="range" id="dash-age-slider" min="20" max="40" value="27" class="range-slider">
+              </div>
+
+              <!-- Height Slider -->
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label for="dash-height-slider" class="form-label">Height</label>
+                  <span id="dash-height-val" class="current-val-badge">5.6 Ft</span>
+                </div>
+                <input type="range" id="dash-height-slider" min="4.8" max="6.5" step="0.1" value="5.6" class="range-slider">
+              </div>
+
+              <!-- Submit -->
+              <div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; height: 46px;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  <span>Find Matches</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- Featured Daily Matches Feed -->
+        <section style="margin-bottom: 2rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <div>
+              <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main);">
+                Recommended Matches For You
+              </h2>
+              <p style="color: var(--text-muted); font-size: 0.9rem;">
+                Curated based on your partner preferences & horoscopic compatibility.
+              </p>
+            </div>
+            <a href="matches.html" class="btn btn-ghost btn-sm" style="font-weight: 700; color: var(--primary);">
+              View All (12) &rarr;
+            </a>
+          </div>
+
+          <div class="candidates-grid" id="dashboardCandidatesMount">
+            <!-- Rendered by JS -->
+          </div>
+        </section>
+
+      </main>
+
+      <!-- App Footer -->
+      <footer class="app-footer">
+        <div>&copy; 2026 LivePartner Matrimony. All rights reserved.</div>
+        <div class="footer-links">
+          <a href="search.html">Search</a>
+          <a href="matches.html">Matches</a>
+          <a href="profile.html">Profile</a>
+          <a href="messages.html">Messages</a>
+          <a href="login.html">Sign In</a>
+        </div>
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- Reusable Components -->
+  <script src="js/data/candidates.js"></script>
+  <script src="js/components/toast.js"></script>
+  <script src="js/components/modal.js"></script>
+  <script src="js/components/navigation.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      new MatrimonyNavigation({ activePage: 'dashboard' });
+
+      // Render top recommended candidates
+      function renderDashboardCandidates() {
+        const mount = document.getElementById('dashboardCandidatesMount');
+        if (mount && typeof CANDIDATE_DATABASE !== 'undefined') {
+          mount.innerHTML = CANDIDATE_DATABASE.slice(0, 6).map(c => createCandidateCard(c)).join('');
+        }
+      }
+
+      renderDashboardCandidates();
+      if (typeof loadCandidatesFromApi === 'function') {
+        loadCandidatesFromApi().then(() => renderDashboardCandidates());
+      }
+
+      // Slider visual track and live labels
+      const ageSlider = document.getElementById('dash-age-slider');
+      const ageVal = document.getElementById('dash-age-val');
+      const heightSlider = document.getElementById('dash-height-slider');
+      const heightVal = document.getElementById('dash-height-val');
+
+      function updateTrack(slider) {
+        const min = parseFloat(slider.min);
+        const max = parseFloat(slider.max);
+        const val = parseFloat(slider.value);
+        const pct = ((val - min) / (max - min)) * 100;
+        slider.style.background = `linear-gradient(to right, #6366f1 0%, #ec4899 ${pct}%, #e2e8f0 ${pct}%, #e2e8f0 100%)`;
+      }
+
+      if (ageSlider && ageVal) {
+        ageSlider.addEventListener('input', (e) => {
+          ageVal.textContent = `${e.target.value} Yrs`;
+          updateTrack(ageSlider);
+        });
+        updateTrack(ageSlider);
+      }
+
+      if (heightSlider && heightVal) {
+        heightSlider.addEventListener('input', (e) => {
+          heightVal.textContent = `${parseFloat(e.target.value).toFixed(1)} Ft`;
+          updateTrack(heightSlider);
+        });
+        updateTrack(heightSlider);
+      }
+
+      // Update stat count from stored shortlist
+      const shortlistCountEl = document.getElementById('stat-shortlist-count');
+      if (shortlistCountEl) {
+        shortlistCountEl.textContent = getShortlist().length;
+      }
+      const interestsCountEl = document.getElementById('stat-interests-count');
+      if (interestsCountEl) {
+        interestsCountEl.textContent = getInterests().length + 2;
+      }
+    });
+
+    function handleQuickSearch(e) {
+      e.preventDefault();
+      const id = document.getElementById('dash-candidate-id').value.trim();
+      const age = document.getElementById('dash-age-slider').value;
+      const height = document.getElementById('dash-height-slider').value;
+
+      window.location.href = `search.html?id=${encodeURIComponent(id)}&age=${age}&height=${height}`;
+    }
+  </script>
+</body>
+</html>

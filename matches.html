@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Matches | LivePartner Matrimony</title>
+  <meta name="description" content="Explore top compatible matrimony matches curated based on your preferences.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/layout.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+
+  <div class="app-shell">
+    <div class="ambient-glow glow-top-right"></div>
+    <div class="ambient-glow glow-bottom-left"></div>
+
+    <!-- Collapsible Navigation Mount -->
+    <div id="sidebar-mount"></div>
+
+    <!-- Main Content Area -->
+    <div class="app-main">
+      
+      <!-- Topbar -->
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <button type="button" class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle navigation drawer">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+
+          <div class="topbar-title-group">
+            <h1 class="topbar-page-title">Daily Matches</h1>
+            <span class="topbar-badge" id="matches-badge-count">12 New</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <a href="search.html" class="btn btn-secondary btn-sm">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <span>Custom Search</span>
+          </a>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <main class="content-container">
+        
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h2 style="font-size: 1.75rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.25rem;">
+              Curated Profiles Just For You
+            </h2>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">
+              Handpicked candidate profiles based on location, education, family values, and astrological compatibility.
+            </p>
+          </div>
+
+          <!-- Sort Dropdown -->
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <label for="matches-sort" style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">Sort By:</label>
+            <select id="matches-sort" class="form-select no-icon" onchange="renderMatches()" style="padding: 0.45rem 1.75rem 0.45rem 0.75rem; font-size: 0.85rem; border-radius: var(--radius-sm); width: auto;">
+              <option value="score">Highest Compatibility</option>
+              <option value="age_asc">Age (Youngest First)</option>
+              <option value="height_desc">Height (Tallest First)</option>
+              <option value="name">Name (A-Z)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <nav class="nav-tabs" style="margin-bottom: 2rem;" aria-label="Matches Categories">
+          <button type="button" class="tab-btn active" data-tab="all" onclick="switchTab('all', this)">All Recommendations</button>
+          <button type="button" class="tab-btn" data-tab="verified" onclick="switchTab('verified', this)">✓ ID Verified</button>
+          <button type="button" class="tab-btn" data-tab="premium" onclick="switchTab('premium', this)">★ Premium Members</button>
+          <button type="button" class="tab-btn" data-tab="high-score" onclick="switchTab('high-score', this)">🔥 >90% Compatibility</button>
+        </nav>
+
+        <!-- Candidate Grid -->
+        <div class="candidates-grid" id="matchesContainer">
+          <!-- Rendered by JS -->
+        </div>
+
+      </main>
+
+      <!-- App Footer -->
+      <footer class="app-footer">
+        <div>&copy; 2026 LivePartner Matrimony. All rights reserved.</div>
+        <div class="footer-links">
+          <a href="index.html">Dashboard</a>
+          <a href="search.html">Search</a>
+          <a href="profile.html">Profile</a>
+          <a href="login.html">Sign In</a>
+        </div>
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- Reusable Components -->
+  <script src="js/data/candidates.js"></script>
+  <script src="js/components/toast.js"></script>
+  <script src="js/components/modal.js"></script>
+  <script src="js/components/navigation.js"></script>
+
+  <script>
+    let currentFilter = 'all';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      new MatrimonyNavigation({ activePage: 'matches' });
+      renderMatches();
+
+      if (typeof loadCandidatesFromApi === 'function') {
+        loadCandidatesFromApi().then(() => renderMatches());
+      }
+    });
+
+    function switchTab(tab, btn) {
+      currentFilter = tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderMatches();
+    }
+
+    function renderMatches() {
+      if (typeof CANDIDATE_DATABASE === 'undefined') return;
+
+      let list = [...CANDIDATE_DATABASE];
+
+      // Apply Filter Tab
+      if (currentFilter === 'verified') {
+        list = list.filter(c => c.isVerified);
+      } else if (currentFilter === 'premium') {
+        list = list.filter(c => c.isPremium);
+      } else if (currentFilter === 'high-score') {
+        list = list.filter(c => c.matchScore >= 90);
+      }
+
+      // Apply Sort
+      const sortBy = document.getElementById('matches-sort').value;
+      if (sortBy === 'score') {
+        list.sort((a, b) => b.matchScore - a.matchScore);
+      } else if (sortBy === 'age_asc') {
+        list.sort((a, b) => a.age - b.age);
+      } else if (sortBy === 'height_desc') {
+        list.sort((a, b) => b.height - a.height);
+      } else if (sortBy === 'name') {
+        list.sort((a, b) => a.name.localeCompare(b.name));
+      }
+
+      const mount = document.getElementById('matchesContainer');
+      mount.innerHTML = list.map(c => createCandidateCard(c)).join('');
+    }
+  </script>
+</body>
+</html>

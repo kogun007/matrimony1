@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page Title | LivePartner Matrimony</title>
+  <meta name="description" content="Template page structure for creating new pages on LivePartner Matrimony.">
+  
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Core Design System CSS -->
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/layout.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+
+  <div class="app-shell">
+    <!-- 1. Ambient Background Glows -->
+    <div class="ambient-glow glow-top-right"></div>
+    <div class="ambient-glow glow-bottom-left"></div>
+
+    <!-- 2. Reusable Collapsible Navigation Mount Point -->
+    <div id="sidebar-mount"></div>
+
+    <!-- 3. Main Content Wrapper -->
+    <div class="app-main">
+      
+      <!-- Top Header Bar -->
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <!-- Mobile Drawer Toggle Button -->
+          <button type="button" class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Open mobile navigation">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+
+          <div class="topbar-title-group">
+            <h1 class="topbar-page-title">Page Title</h1>
+            <span class="topbar-badge">Template</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <a href="search.html" class="btn btn-secondary btn-sm" aria-label="Quick Search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <span>Search</span>
+          </a>
+          <a href="matches.html" class="btn btn-primary btn-sm" aria-label="View Matches">
+            <span>Discover Matches</span>
+          </a>
+        </div>
+      </header>
+
+      <!-- Page Body Content -->
+      <main class="content-container">
+        
+        <!-- Hero / Header Section -->
+        <section style="margin-bottom: 2rem;">
+          <h2 style="font-size: 1.75rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.35rem;">
+            New Page Boilerplate
+          </h2>
+          <p style="color: var(--text-muted); font-size: 1rem;">
+            This master template demonstrates the collapsible navigation, top bar, responsive layout, and design system components.
+          </p>
+        </section>
+
+        <!-- Sample Grid Layout with Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+          
+          <!-- Sample Card 1 -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Card Container</h3>
+              <span class="tag-badge">Badge</span>
+            </div>
+            <div class="card-body">
+              <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; margin-bottom: 1rem;">
+                Standard card with subtle border, hover elevation, and flexible layout for displaying matrimony components.
+              </p>
+              <button type="button" class="btn btn-outline-primary btn-sm" onclick="window.toast.show('Sample interaction triggered!', 'info')">
+                Test Toast Notification
+              </button>
+            </div>
+          </div>
+
+          <!-- Sample Card 2 -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Form Controls</h3>
+            </div>
+            <div class="card-body">
+              <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="sample-input" class="form-label">Sample Input</label>
+                <div class="input-wrapper">
+                  <span class="input-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  </span>
+                  <input type="text" id="sample-input" class="form-input" placeholder="Type here...">
+                </div>
+              </div>
+              <button type="button" class="btn btn-primary btn-sm" style="width: 100%;" onclick="window.toast.show('Form submitted successfully!', 'success')">
+                Submit Action
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </main>
+
+      <!-- App Footer -->
+      <footer class="app-footer">
+        <div>&copy; 2026 LivePartner Matrimony. All rights reserved.</div>
+        <div class="footer-links">
+          <a href="search.html">Search</a>
+          <a href="matches.html">Matches</a>
+          <a href="profile.html">Profile</a>
+          <a href="login.html">Sign In</a>
+        </div>
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- Reusable JavaScript Modules -->
+  <script src="js/data/candidates.js"></script>
+  <script src="js/components/toast.js"></script>
+  <script src="js/components/modal.js"></script>
+  <script src="js/components/navigation.js"></script>
+  <script>
+    // Explicitly set active page for this template
+    document.addEventListener('DOMContentLoaded', () => {
+      new MatrimonyNavigation({ activePage: 'template' });
+    });
+  </script>
+</body>
+</html>

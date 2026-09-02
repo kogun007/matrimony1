@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile & Preferences | LivePartner Matrimony</title>
+  <meta name="description" content="Manage your matrimony profile, upload photos, and refine your partner preferences.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/layout.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+
+  <div class="app-shell">
+    <div class="ambient-glow glow-top-right"></div>
+    <div class="ambient-glow glow-bottom-left"></div>
+
+    <!-- Collapsible Navigation Mount -->
+    <div id="sidebar-mount"></div>
+
+    <!-- Main Content Area -->
+    <div class="app-main">
+      
+      <!-- Topbar -->
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <button type="button" class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle navigation drawer">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+
+          <div class="topbar-title-group">
+            <h1 class="topbar-page-title">My Profile</h1>
+            <span class="topbar-badge">95% Complete</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <button type="button" class="btn btn-primary btn-sm" onclick="saveProfileChanges()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            <span>Save Changes</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <main class="content-container">
+        
+        <!-- Profile Banner Card -->
+        <div class="card" style="margin-bottom: 2rem; overflow: visible;">
+          <div style="height: 120px; background: var(--gradient-brand); border-radius: var(--radius-lg) var(--radius-lg) 0 0; position: relative;"></div>
+          <div class="card-body" style="padding-top: 0; position: relative;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; margin-top: -50px; margin-bottom: 1.5rem;">
+              <div style="display: flex; align-items: flex-end; gap: 1.25rem;">
+                <div style="position: relative; width: 100px; height: 100px; border-radius: 50%; border: 4px solid var(--surface); box-shadow: var(--shadow-md); overflow: hidden; background: #fff;">
+                  <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&h=250&q=80" alt="Priya Sharma" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <div style="margin-bottom: 0.5rem;">
+                  <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+                    Priya Sharma
+                    <span style="font-size: 0.75rem; background: var(--success-bg); color: var(--success); padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--success-border);">✓ Verified</span>
+                  </h2>
+                  <div style="font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">
+                    Candidate ID: LPS-88421 · 26 Yrs · 5.6 Ft · Pune, Maharashtra
+                  </div>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.toast.show('Photo upload dialog opened', 'info')">
+                  Change Photo
+                </button>
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="window.toast.show('Profile link copied to clipboard!', 'success')">
+                  Share Profile
+                </button>
+              </div>
+            </div>
+
+            <!-- Profile Navigation Tabs -->
+            <div class="nav-tabs" style="border-bottom: 1px solid var(--surface-border-subtle);">
+              <button type="button" class="tab-btn active" onclick="switchProfileSection('basic', this)">Personal & Bio</button>
+              <button type="button" class="tab-btn" onclick="switchProfileSection('career', this)">Education & Career</button>
+              <button type="button" class="tab-btn" onclick="switchProfileSection('horoscope', this)">Horoscope / Astrology</button>
+              <button type="button" class="tab-btn" onclick="switchProfileSection('preferences', this)">Partner Preferences</button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Section 1: Personal & Bio -->
+        <div id="section-basic" class="card profile-tab-content">
+          <div class="card-header">
+            <h3 class="card-title">Personal Information & About Me</h3>
+          </div>
+          <div class="card-body">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
+              
+              <div class="form-group">
+                <label for="prof-fullname" class="form-label">Full Name</label>
+                <input type="text" id="prof-fullname" class="form-input no-icon" value="Priya Sharma">
+              </div>
+
+              <div class="form-group">
+                <label for="prof-dob" class="form-label">Date of Birth</label>
+                <input type="date" id="prof-dob" class="form-input no-icon" value="1999-06-14">
+              </div>
+
+              <div class="form-group">
+                <label for="prof-marital" class="form-label">Marital Status</label>
+                <select id="prof-marital" class="form-select no-icon">
+                  <option selected>Never Married</option>
+                  <option>Divorced</option>
+                  <option>Widowed</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="prof-tongue" class="form-label">Mother Tongue</label>
+                <input type="text" id="prof-tongue" class="form-input no-icon" value="Marathi">
+              </div>
+
+              <div class="form-group">
+                <label for="prof-diet" class="form-label">Dietary Habit</label>
+                <select id="prof-diet" class="form-select no-icon">
+                  <option selected>Vegetarian</option>
+                  <option>Non-Vegetarian</option>
+                  <option>Eggetarian</option>
+                  <option>Vegan</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="prof-location" class="form-label">Current City / State</label>
+                <input type="text" id="prof-location" class="form-input no-icon" value="Pune, Maharashtra, India">
+              </div>
+
+            </div>
+
+            <div class="form-group" style="margin-top: 1.5rem;">
+              <label for="prof-about" class="form-label">About Me (Bio)</label>
+              <textarea id="prof-about" class="form-input no-icon" rows="4" style="resize: vertical; line-height: 1.6;">Software engineer working at a leading cloud tech firm in Pune. Passionate about classical Indian dance, landscape painting, and weekend baking. Looking for a progressive, family-oriented partner with similar cultural grounding.</textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Education & Career -->
+        <div id="section-career" class="card profile-tab-content" style="display: none;">
+          <div class="card-header">
+            <h3 class="card-title">Educational & Professional Background</h3>
+          </div>
+          <div class="card-body">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
+              
+              <div class="form-group">
+                <label for="prof-education" class="form-label">Highest Qualification</label>
+                <input type="text" id="prof-education" class="form-input no-icon" value="B.Tech in Computer Science">
+              </div>
+
+              <div class="form-group">
+                <label for="prof-college" class="form-label">College / University</label>
+                <input type="text" id="prof-college" class="form-input no-icon" value="COEP Technological University, Pune">
+              </div>
+
+              <div class="form-group">
+                <label for="prof-occupation" class="form-label">Occupation / Designation</label>
+                <input type="text" id="prof-occupation" class="form-input no-icon" value="Senior Frontend Engineer">
+              </div>
+
+              <div class="form-group">
+                <label for="prof-employer" class="form-label">Employed In / Company</label>
+                <input type="text" id="prof-employer" class="form-input no-icon" value="Cisco Systems">
+              </div>
+
+              <div class="form-group">
+                <label for="prof-income" class="form-label">Annual Income</label>
+                <input type="text" id="prof-income" class="form-input no-icon" value="₹24 - 30 LPA">
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Horoscope / Astrology -->
+        <div id="section-horoscope" class="card profile-tab-content" style="display: none;">
+          <div class="card-header">
+            <h3 class="card-title">Astrological & Kundali Details</h3>
+          </div>
+          <div class="card-body">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
+              <div class="form-group">
+                <label for="prof-rashi" class="form-label">Rashi / Moon Sign</label>
+                <input type="text" id="prof-rashi" class="form-input no-icon" value="Kanya (Virgo)">
+              </div>
+              <div class="form-group">
+                <label for="prof-nakshatra" class="form-label">Nakshatra</label>
+                <input type="text" id="prof-nakshatra" class="form-input no-icon" value="Hasta">
+              </div>
+              <div class="form-group">
+                <label for="prof-gothram" class="form-label">Gothram</label>
+                <input type="text" id="prof-gothram" class="form-input no-icon" value="Kashyapa">
+              </div>
+              <div class="form-group">
+                <label for="prof-manglik" class="form-label">Manglik / Dosham Status</label>
+                <select id="prof-manglik" class="form-select no-icon">
+                  <option selected>Non-Manglik</option>
+                  <option>Manglik</option>
+                  <option>Anshik Manglik</option>
+                  <option>Don't Know</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4: Partner Preferences -->
+        <div id="section-preferences" class="card profile-tab-content" style="display: none;">
+          <div class="card-header">
+            <h3 class="card-title">Desired Partner Preferences</h3>
+          </div>
+          <div class="card-body">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
+              
+              <div class="form-group">
+                <label for="pref-age" class="form-label">Age Range</label>
+                <input type="text" id="pref-age" class="form-input no-icon" value="26 to 32 Years">
+              </div>
+
+              <div class="form-group">
+                <label for="pref-height" class="form-label">Height Range</label>
+                <input type="text" id="pref-height" class="form-input no-icon" value="5.6 to 6.2 Feet">
+              </div>
+
+              <div class="form-group">
+                <label for="pref-education" class="form-label">Education Preference</label>
+                <input type="text" id="pref-education" class="form-input no-icon" value="B.Tech, MS, MBA, MBBS, MD">
+              </div>
+
+              <div class="form-group">
+                <label for="pref-locations" class="form-label">Preferred Locations</label>
+                <input type="text" id="pref-locations" class="form-input no-icon" value="Pune, Mumbai, Bangalore, Hyderabad">
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </main>
+
+      <!-- App Footer -->
+      <footer class="app-footer">
+        <div>&copy; 2026 LivePartner Matrimony. All rights reserved.</div>
+        <div class="footer-links">
+          <a href="index.html">Dashboard</a>
+          <a href="search.html">Search</a>
+          <a href="matches.html">Matches</a>
+          <a href="login.html">Sign In</a>
+        </div>
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- Reusable Components -->
+  <script src="js/data/candidates.js"></script>
+  <script src="js/components/toast.js"></script>
+  <script src="js/components/modal.js"></script>
+  <script src="js/components/navigation.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      new MatrimonyNavigation({ activePage: 'profile' });
+    });
+
+    function switchProfileSection(sectionId, tabBtn) {
+      document.querySelectorAll('.profile-tab-content').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+      const targetSection = document.getElementById(`section-${sectionId}`);
+      if (targetSection) targetSection.style.display = 'block';
+      if (tabBtn) tabBtn.classList.add('active');
+    }
+
+    function saveProfileChanges() {
+      window.toast.show('Profile changes saved successfully! ✨', 'success');
+    }
+  </script>
+</body>
+</html>

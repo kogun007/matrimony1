@@ -44,9 +44,9 @@
         </div>
 
         <div class="topbar-right">
-          <button type="button" class="btn btn-primary btn-sm" onclick="saveProfileChanges()">
+          <button type="button" class="btn btn-primary btn-sm btn-profile-save" onclick="saveProfileChanges()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-            <span>Save Changes</span>
+            <span class="save-btn-text">Save Changes</span>
           </button>
         </div>
       </header>
@@ -55,42 +55,91 @@
       <main class="content-container">
         
         <!-- Profile Banner Card -->
-        <div class="card" style="margin-bottom: 2rem; overflow: visible;">
-          <div style="height: 120px; background: var(--gradient-brand); border-radius: var(--radius-lg) var(--radius-lg) 0 0; position: relative;"></div>
-          <div class="card-body" style="padding-top: 0; position: relative;">
+        <div class="card profile-hero-card">
+          <div class="profile-hero-cover">
+            <div class="profile-hero-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <span>Verified Candidate</span>
+            </div>
+          </div>
+          <div class="card-body profile-hero-body">
             
-            <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; margin-top: -50px; margin-bottom: 1.5rem;">
-              <div style="display: flex; align-items: flex-end; gap: 1.25rem;">
-                <div style="position: relative; width: 100px; height: 100px; border-radius: 50%; border: 4px solid var(--surface); box-shadow: var(--shadow-md); overflow: hidden; background: #fff;">
-                  <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&h=250&q=80" alt="Priya Sharma" style="width: 100%; height: 100%; object-fit: cover;">
+            <!-- Hidden File Input for Direct Database Photo Uploads -->
+            <input type="file" id="photoFileInput" accept="image/png, image/jpeg, image/webp" style="display: none;" onchange="handlePhotoFileSelected(this)">
+
+            <div class="profile-hero-row">
+              <div class="profile-hero-identity">
+                <div class="profile-avatar-wrapper">
+                  <img id="profileAvatarImg" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&h=250&q=80" alt="Profile Photo" class="profile-avatar-img">
+                  <button type="button" class="profile-avatar-edit-badge" onclick="triggerPhotoPicker()" aria-label="Change Profile Photo" title="Upload Photo to Database">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                  </button>
                 </div>
-                <div style="margin-bottom: 0.5rem;">
-                  <h2 style="font-size: 1.45rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
-                    Priya Sharma
-                    <span style="font-size: 0.75rem; background: var(--success-bg); color: var(--success); padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--success-border);">✓ Verified</span>
-                  </h2>
-                  <div style="font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">
-                    Candidate ID: LPS-88421 · 26 Yrs · 5.6 Ft · Pune, Maharashtra
+                <div class="profile-hero-details">
+                  <div class="profile-hero-name-row">
+                    <h2 id="profileDisplayName" class="profile-hero-name">Priya Sharma</h2>
+                    <span id="profileDisplayId" class="profile-id-chip">ID: LPS-88421</span>
+                  </div>
+                  <div class="profile-hero-pills">
+                    <span id="profilePillAge" class="profile-pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 26 Yrs</span>
+                    <span id="profilePillHeight" class="profile-pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> 5.6 Ft</span>
+                    <span id="profilePillLocation" class="profile-pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> Pune, Maharashtra</span>
+                  </div>
+
+                  <!-- Profile Creation & 3-Month Validity Banner -->
+                  <div class="profile-validity-card" id="profileValidityCard" style="margin-top: 0.85rem; padding: 0.55rem 0.85rem; background: var(--surface-alt); border-radius: var(--radius-md); border: 1px solid var(--surface-border); display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; font-size: 0.78rem;">
+                    <div style="display: flex; align-items: center; gap: 0.35rem; color: var(--text-muted);">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                      <span>Created: <strong id="profCreatedAtDisplay" style="color: var(--text-main);">Today</strong></span>
+                    </div>
+                    <span style="color: var(--surface-border);">•</span>
+                    <div style="display: flex; align-items: center; gap: 0.35rem; color: var(--text-muted);">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                      <span>Validity: <strong id="profValidityCountdown" style="color: var(--primary);">90 days left (3 mo limit)</strong></span>
+                    </div>
+                    <span style="color: var(--surface-border);">•</span>
+                    <div style="display: flex; align-items: center; gap: 0.35rem; color: var(--text-muted);">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                      <span>Views: <strong id="profViewsQuotaDisplay" style="color: var(--accent);">0 / 75 Used</strong></span>
+                    </div>
+                    <span style="color: var(--surface-border);">•</span>
+                    <div id="profActivationContainer" style="display: flex; align-items: center; gap: 0.35rem;">
+                      <span id="profActivationBadge" style="font-weight: 700; font-size: 0.76rem;">⏳ Checking Activation...</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="window.toast.show('Photo upload dialog opened', 'info')">
-                  Change Photo
+              <div class="profile-hero-actions">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="triggerPhotoPicker()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                  <span>Change Photo</span>
                 </button>
-                <button type="button" class="btn btn-outline-primary btn-sm" onclick="window.toast.show('Profile link copied to clipboard!', 'success')">
-                  Share Profile
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="shareProfileLink()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                  <span>Share Profile</span>
                 </button>
               </div>
             </div>
 
             <!-- Profile Navigation Tabs -->
-            <div class="nav-tabs" style="border-bottom: 1px solid var(--surface-border-subtle);">
-              <button type="button" class="tab-btn active" onclick="switchProfileSection('basic', this)">Personal & Bio</button>
-              <button type="button" class="tab-btn" onclick="switchProfileSection('career', this)">Education & Career</button>
-              <button type="button" class="tab-btn" onclick="switchProfileSection('horoscope', this)">Horoscope / Astrology</button>
-              <button type="button" class="tab-btn" onclick="switchProfileSection('preferences', this)">Partner Preferences</button>
+            <div class="nav-tabs profile-nav-tabs">
+              <button type="button" class="tab-btn active" onclick="switchProfileSection('basic', this)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <span>Personal & Bio</span>
+              </button>
+              <button type="button" class="tab-btn" onclick="switchProfileSection('career', this)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                <span>Education & Career</span>
+              </button>
+              <button type="button" class="tab-btn" onclick="switchProfileSection('horoscope', this)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                <span>Horoscope / Kundali</span>
+              </button>
+              <button type="button" class="tab-btn" onclick="switchProfileSection('preferences', this)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                <span>Partner Preferences</span>
+              </button>
             </div>
 
           </div>
@@ -102,11 +151,19 @@
             <h3 class="card-title">Personal Information & About Me</h3>
           </div>
           <div class="card-body">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
+            <div class="profile-form-grid">
               
               <div class="form-group">
                 <label for="prof-fullname" class="form-label">Full Name</label>
                 <input type="text" id="prof-fullname" class="form-input no-icon" value="Priya Sharma">
+              </div>
+
+              <div class="form-group">
+                <label for="prof-gender" class="form-label">My Gender (Defines Opposite-Gender Matches)</label>
+                <select id="prof-gender" class="form-select no-icon">
+                  <option value="Female">Female (View Male Grooms)</option>
+                  <option value="Male">Male (View Female Brides)</option>
+                </select>
               </div>
 
               <div class="form-group">
@@ -150,6 +207,16 @@
               <textarea id="prof-about" class="form-input no-icon" rows="4" style="resize: vertical; line-height: 1.6;">Software engineer working at a leading cloud tech firm in Pune. Passionate about classical Indian dance, landscape painting, and weekend baking. Looking for a progressive, family-oriented partner with similar cultural grounding.</textarea>
             </div>
           </div>
+          <div class="profile-card-footer">
+            <div class="profile-card-footer-info">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              <span>Changes reflect instantly across match recommendations</span>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="saveProfileChanges()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+              <span>Save Changes</span>
+            </button>
+          </div>
         </div>
 
         <!-- Section 2: Education & Career -->
@@ -158,7 +225,7 @@
             <h3 class="card-title">Educational & Professional Background</h3>
           </div>
           <div class="card-body">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
+            <div class="profile-form-grid">
               
               <div class="form-group">
                 <label for="prof-education" class="form-label">Highest Qualification</label>
@@ -187,6 +254,16 @@
 
             </div>
           </div>
+          <div class="profile-card-footer">
+            <div class="profile-card-footer-info">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              <span>Visible to verified profiles viewing your profile</span>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="saveProfileChanges()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+              <span>Save Changes</span>
+            </button>
+          </div>
         </div>
 
         <!-- Section 3: Horoscope / Astrology -->
@@ -195,7 +272,7 @@
             <h3 class="card-title">Astrological & Kundali Details</h3>
           </div>
           <div class="card-body">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
+            <div class="profile-form-grid">
               <div class="form-group">
                 <label for="prof-rashi" class="form-label">Rashi / Moon Sign</label>
                 <input type="text" id="prof-rashi" class="form-input no-icon" value="Kanya (Virgo)">
@@ -219,6 +296,16 @@
               </div>
             </div>
           </div>
+          <div class="profile-card-footer">
+            <div class="profile-card-footer-info">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              <span>Used for Guna Milan & Kundali compatibility matching</span>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="saveProfileChanges()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+              <span>Save Changes</span>
+            </button>
+          </div>
         </div>
 
         <!-- Section 4: Partner Preferences -->
@@ -227,7 +314,7 @@
             <h3 class="card-title">Desired Partner Preferences</h3>
           </div>
           <div class="card-body">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
+            <div class="profile-form-grid">
               
               <div class="form-group">
                 <label for="pref-age" class="form-label">Age Range</label>
@@ -251,6 +338,16 @@
 
             </div>
           </div>
+          <div class="profile-card-footer">
+            <div class="profile-card-footer-info">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              <span>Directly shapes your personalized candidate recommendations</span>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="saveProfileChanges()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+              <span>Save Changes</span>
+            </button>
+          </div>
         </div>
 
       </main>
@@ -261,7 +358,7 @@
         <div class="footer-links">
           <a href="index.html">Dashboard</a>
           <a href="search.html">Search</a>
-          <a href="matches.html">Matches</a>
+          <a href="recently-viewed.html">Recently Viewed</a>
           <a href="login.html">Sign In</a>
         </div>
       </footer>
@@ -276,9 +373,168 @@
   <script src="js/components/navigation.js"></script>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       new MatrimonyNavigation({ activePage: 'profile' });
+      updateProfileGenderDisplay();
+
+      // Load saved user biodata and photo from database
+      await loadProfileBiodata();
+
+      window.addEventListener('userGenderChanged', () => {
+        updateProfileGenderDisplay();
+      });
     });
+
+    let pendingPhotoData = null;
+    let pendingPhotoFileName = '';
+
+    function triggerPhotoPicker() {
+      const fileInput = document.getElementById('photoFileInput');
+      if (fileInput) fileInput.click();
+    }
+
+    function handlePhotoFileSelected(input) {
+      if (!input.files || !input.files[0]) return;
+      const file = input.files[0];
+
+      // Validate max file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        window.toast.show('Photo file is too large. Please select an image under 5MB.', 'warning');
+        input.value = '';
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        pendingPhotoData = e.target.result;
+        pendingPhotoFileName = file.name;
+        
+        // Optimistic UI preview only - do NOT save to database yet!
+        const avatarImg = document.getElementById('profileAvatarImg');
+        if (avatarImg) avatarImg.src = pendingPhotoData;
+
+        window.toast.show('Photo preview updated! Click "Save Changes" to save to database. 📸', 'info');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function loadProfileBiodata() {
+      try {
+        const biodata = await fetchUserBiodataFromApi();
+        if (!biodata) return;
+
+        const setVal = (id, val) => {
+          const el = document.getElementById(id);
+          if (el && val !== undefined && val !== null) el.value = val;
+        };
+
+        setVal('prof-fullname', biodata.full_name);
+        setVal('prof-gender', biodata.gender);
+        setVal('prof-dob', biodata.dob);
+        setVal('prof-marital', biodata.marital_status);
+        setVal('prof-tongue', biodata.mother_tongue);
+        setVal('prof-diet', biodata.diet);
+        setVal('prof-location', biodata.location);
+        setVal('prof-about', biodata.about_me);
+
+        setVal('prof-education', biodata.education);
+        setVal('prof-college', biodata.college);
+        setVal('prof-occupation', biodata.occupation);
+        setVal('prof-employer', biodata.company);
+        setVal('prof-income', biodata.annual_income);
+
+        setVal('prof-rashi', biodata.rashi);
+        setVal('prof-nakshatra', biodata.nakshatra);
+        setVal('prof-gothram', biodata.gothram);
+        setVal('prof-manglik', biodata.manglik);
+
+        setVal('pref-age', biodata.pref_age);
+        setVal('pref-height', biodata.pref_height);
+        setVal('pref-education', biodata.pref_education);
+        setVal('pref-locations', biodata.pref_locations);
+
+        if (biodata.photo_url) {
+          const avatarImg = document.getElementById('profileAvatarImg');
+          if (avatarImg) avatarImg.src = biodata.photo_url;
+        }
+
+        updateHeaderCardDisplays(biodata);
+
+        if (biodata.gender) {
+          setUserGender(biodata.gender);
+          updateProfileGenderDisplay();
+        }
+
+        // Fetch and display 3-month validity & 75-view quota status
+        if (typeof fetchUserQuota === 'function') {
+          fetchUserQuota().then(quota => {
+            if (quota && quota.success) {
+              const createdEl = document.getElementById('profCreatedAtDisplay');
+              const validEl = document.getElementById('profValidityCountdown');
+              const viewsEl = document.getElementById('profViewsQuotaDisplay');
+
+              if (createdEl && quota.profile_created_at) {
+                const d = new Date(quota.profile_created_at);
+                createdEl.textContent = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+              }
+              if (validEl) {
+                if (quota.is_time_expired) {
+                  validEl.innerHTML = '<span style="color: var(--danger); font-weight: 700;">Expired (3-Mo Limit Reached)</span>';
+                } else {
+                  validEl.textContent = `${quota.days_remaining} days left (3 mo limit)`;
+                }
+              }
+              if (viewsEl) {
+                viewsEl.textContent = `${quota.used} / ${quota.limit} Used`;
+              }
+              const actEl = document.getElementById('profActivationBadge');
+              if (actEl) {
+                if (quota.is_active) {
+                  actEl.innerHTML = '<span style="color: #166534; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 0.15rem 0.5rem; border-radius: var(--radius-full); display: inline-flex; align-items: center; gap: 0.25rem;">✅ Admin Activated · Contacts Unlocked</span>';
+                } else {
+                  actEl.innerHTML = '<span style="color: #b45309; background: #fef3c7; border: 1px solid #fde68a; padding: 0.15rem 0.5rem; border-radius: var(--radius-full); display: inline-flex; align-items: center; gap: 0.25rem;" title="An administrator must activate your profile before you can view candidate phone & email details">⏳ Pending Admin Activation · Contacts Locked</span>';
+                }
+              }
+            }
+          });
+        }
+      } catch (err) {
+        console.warn('Error loading biodata:', err);
+      }
+    }
+
+    function updateHeaderCardDisplays(data) {
+      if (data.full_name) {
+        const nameEl = document.getElementById('profileDisplayName');
+        if (nameEl) nameEl.textContent = data.full_name;
+      }
+      if (data.user_id) {
+        const idEl = document.getElementById('profileDisplayId');
+        if (idEl) idEl.textContent = `ID: ${data.user_id}`;
+      }
+      if (data.location) {
+        const locEl = document.getElementById('profilePillLocation');
+        if (locEl) {
+          locEl.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ${data.location.split(',')[0]}`;
+        }
+      }
+    }
+
+    function updateProfileGenderDisplay() {
+      const currentGender = getUserGender();
+      const oppGender = getOppositeGender();
+
+      const selectEl = document.getElementById('prof-gender');
+      if (selectEl) {
+        selectEl.value = currentGender;
+      }
+
+      const userLabel = document.getElementById('userGenderLabel');
+      if (userLabel) userLabel.textContent = currentGender;
+
+      const oppLabel = document.getElementById('oppositeGenderLabel');
+      if (oppLabel) oppLabel.textContent = oppGender;
+    }
 
     function switchProfileSection(sectionId, tabBtn) {
       document.querySelectorAll('.profile-tab-content').forEach(el => el.style.display = 'none');
@@ -289,8 +545,84 @@
       if (tabBtn) tabBtn.classList.add('active');
     }
 
-    function saveProfileChanges() {
-      window.toast.show('Profile changes saved successfully! ✨', 'success');
+    async function saveProfileChanges() {
+      const getVal = (id) => {
+        const el = document.getElementById(id);
+        return el ? el.value.trim() : '';
+      };
+
+      const avatarImg = document.getElementById('profileAvatarImg');
+      let currentPhotoUrl = avatarImg ? avatarImg.src : null;
+
+      window.toast.show('Saving changes to database... ⏳', 'info');
+
+      // 1. If a new photo was selected by the user, save it to the database now
+      if (pendingPhotoData) {
+        try {
+          const photoRes = await saveUserPhotoToApi(pendingPhotoData, pendingPhotoFileName);
+          if (photoRes && photoRes.success && photoRes.photo_url) {
+            currentPhotoUrl = photoRes.photo_url;
+            if (avatarImg) avatarImg.src = currentPhotoUrl;
+            pendingPhotoData = null;
+            pendingPhotoFileName = '';
+          }
+        } catch (photoErr) {
+          console.warn('Error saving photo to database:', photoErr);
+        }
+      }
+
+      const selectedGender = getVal('prof-gender') || getUserGender();
+
+      const biodata = {
+        full_name: getVal('prof-fullname') || 'Candidate',
+        gender: selectedGender,
+        dob: getVal('prof-dob'),
+        marital_status: getVal('prof-marital'),
+        mother_tongue: getVal('prof-tongue'),
+        diet: getVal('prof-diet'),
+        location: getVal('prof-location'),
+        about_me: getVal('prof-about'),
+        education: getVal('prof-education'),
+        college: getVal('prof-college'),
+        occupation: getVal('prof-occupation'),
+        company: getVal('prof-employer'),
+        annual_income: getVal('prof-income'),
+        rashi: getVal('prof-rashi'),
+        nakshatra: getVal('prof-nakshatra'),
+        gothram: getVal('prof-gothram'),
+        manglik: getVal('prof-manglik'),
+        pref_age: getVal('pref-age'),
+        pref_height: getVal('pref-height'),
+        pref_education: getVal('pref-education'),
+        pref_locations: getVal('pref-locations'),
+        photo_url: currentPhotoUrl
+      };
+
+      try {
+        const res = await saveUserBiodataToApi(biodata);
+        if (res && res.success) {
+          // Persist gender and update UI only after save button succeeds
+          setUserGender(selectedGender);
+          updateProfileGenderDisplay();
+          updateHeaderCardDisplays(biodata);
+          window.toast.show('🎉 All changes and photo saved successfully in database!', 'success');
+        } else {
+          window.toast.show(res?.message || 'Error saving changes to database', 'warning');
+        }
+      } catch (err) {
+        window.toast.show('Error saving changes: ' + err.message, 'warning');
+      }
+    }
+
+    function shareProfileLink() {
+      const shareUrl = window.location.href;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+          window.toast.show('Profile link copied to clipboard!', 'success');
+        });
+      } else {
+        window.toast.show('Profile link copied: ' + shareUrl, 'info');
+      }
     }
   </script>
 </body>

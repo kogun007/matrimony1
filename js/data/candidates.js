@@ -1,7 +1,9 @@
 /**
- * Jain Matrimony Candidate Profiles Database & API Connector (PostgreSQL Backend)
+ * Jain Matrimony Candidate Profiles Database & API Connector (PostgreSQL Backend & Cloudflare Edge)
  */
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
+  ? (window.location.port === '3000' ? '/api' : 'http://localhost:3000/api')
+  : '/api';
 
 let CANDIDATE_DATABASE = [
   {
@@ -256,10 +258,69 @@ let CANDIDATE_DATABASE = [
   }
 ];
 
-// Async loader to fetch live data from PostgreSQL API
+const DEFAULT_FULL_CANDIDATES = JSON.parse(JSON.stringify(CANDIDATE_DATABASE));
+
+// Strictly two genders: Male and Female
+const VALID_GENDERS = Object.freeze(['Male', 'Female']);
+
+function normalizeGender(gender) {
+  if (!gender) return 'Female';
+  const str = gender.toString().trim().toLowerCase();
+  return str === 'male' ? 'Male' : 'Female';
+}
+
+// User Gender Configuration & Opposite-Gender Filter
+function getUserGender() {
+  const stored = localStorage.getItem('matrimony_user_gender');
+  return normalizeGender(stored);
+}
+
+function getOppositeGender() {
+  const current = getUserGender();
+  return current === 'Female' ? 'Male' : 'Female';
+}
+
+function setUserGender(gender) {
+  const normalized = normalizeGender(gender);
+  localStorage.setItem('matrimony_user_gender', normalized);
+  window.dispatchEvent(new CustomEvent('userGenderChanged', {
+    detail: {
+      userGender: normalized,
+      oppositeGender: getOppositeGender()
+    }
+  }));
+}
+
+function toggleUserGender() {
+  const current = getUserGender();
+  const next = current.toLowerCase() === 'male' ? 'Female' : 'Male';
+  setUserGender(next);
+  if (window.toast) {
+    const opp = getOppositeGender();
+    const label = opp === 'Female' ? 'Brides (Female)' : 'Grooms (Male)';
+    window.toast.show(`Your gender is set to <strong>${next}</strong>. Now viewing opposite-gender profiles: <strong>${label}</strong>`, 'success', 3000);
+  }
+}
+
+function getOppositeGenderCandidates(candidatesList) {
+  const target = getOppositeGender().toLowerCase();
+  const list = (candidatesList && candidatesList.length > 0) ? candidatesList : (CANDIDATE_DATABASE || []);
+  const filtered = list.filter(c => c && c.gender && c.gender.toLowerCase() === target);
+  if (filtered.length > 0) return filtered;
+  if (typeof DEFAULT_FULL_CANDIDATES !== 'undefined' && Array.isArray(DEFAULT_FULL_CANDIDATES)) {
+    return DEFAULT_FULL_CANDIDATES.filter(c => c && c.gender && c.gender.toLowerCase() === target);
+  }
+  return [];
+}
+
+// Async loader to fetch live data from PostgreSQL API filtered by opposite gender
 async function loadCandidatesFromApi(queryParams = {}) {
   try {
     const url = new URL(`${API_BASE_URL}/candidates`);
+    // Enforce opposite gender filtering by default
+    if (!queryParams.gender) {
+      queryParams.gender = getOppositeGender();
+    }
     Object.keys(queryParams).forEach(key => {
       if (queryParams[key] !== undefined && queryParams[key] !== '') {
         url.searchParams.append(key, queryParams[key]);
@@ -302,41 +363,259 @@ async function loadCandidatesFromApi(queryParams = {}) {
   } catch (err) {
     console.warn('API fetch fallback to local Jain dataset:', err.message);
   }
-  return CANDIDATE_DATABASE;
+  return getOppositeGenderCandidates(CANDIDATE_DATABASE);
 }
 
 // Automatically load from API on script load
 loadCandidatesFromApi();
 
-// Helper to generate candidate card HTML
-function createCandidateCard(candidate) {
-  const isShortlisted = isCandidateShortlisted(candidate.id);
-  const isExpressed = isInterestExpressed(candidate.id);
+// User Authentication & Session State Management
+function isUserLoggedIn() {
+  const status = localStorage.getItem('matrimony_is_logged_in');
+  return status !== 'false';
+}
 
+function setUserLoggedIn(loggedIn) {
+  localStorage.setItem('matrimony_is_logged_in', loggedIn ? 'true' : 'false');
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('userAuthStateChanged', { detail: { isLoggedIn: loggedIn } }));
+  }
+}
+
+function logoutUser() {
+  setUserLoggedIn(false);
+  if (typeof window !== 'undefined') {
+    if (window.toast) {
+      window.toast.show('You have logged out successfully. 👋', 'info');
+    }
+    setTimeout(() => {
+      window.location.href = 'login.html';
+    }, 600);
+  }
+}
+
+// User Identity & 75-Profile-View Quota API Connectors
+function getCurrentUserId() {
+  let uid = localStorage.getItem('matrimony_user_id');
+  if (!uid) {
+    uid = 'JAIN-USER-' + Math.floor(1000 + Math.random() * 9000);
+    localStorage.setItem('matrimony_user_id', uid);
+  }
+  return uid;
+}
+
+// Fetch single candidate profile with backend view-limit tracking (Max 75 profiles)
+async function fetchCandidateProfileFromApi(candidateId) {
+  const userId = getCurrentUserId();
+  try {
+    const res = await fetch(`${API_BASE_URL}/candidates/${encodeURIComponent(candidateId)}?user_id=${encodeURIComponent(userId)}`, {
+      headers: {
+        'x-user-id': userId
+      }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.warn('Backend view tracking fetch error:', err.message);
+    return null;
+  }
+}
+
+// Get user's view count, 3-month profile validity and remaining credits
+async function fetchUserQuota() {
+  const userId = getCurrentUserId();
+  try {
+    const res = await fetch(`${API_BASE_URL}/user-quota?user_id=${encodeURIComponent(userId)}`, {
+      headers: { 'x-user-id': userId }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    if (json && json.success) {
+      localStorage.setItem('matrimony_user_views_count', String(json.total_views || json.used || 0));
+      if (json.profile_created_at) localStorage.setItem('matrimony_profile_created_at', json.profile_created_at);
+      if (json.expires_at) localStorage.setItem('matrimony_profile_expires_at', json.expires_at);
+      localStorage.setItem('matrimony_profile_days_remaining', String(json.days_remaining !== undefined ? json.days_remaining : 90));
+      localStorage.setItem('matrimony_profile_is_expired', String(Boolean(json.is_time_expired)));
+      localStorage.setItem('matrimony_profile_is_active', String(Boolean(json.is_active)));
+    }
+    return json;
+  } catch (err) {
+    return null;
+  }
+}
+
+// Reset view quota and renew 3-month profile validity (for evaluation/demo)
+async function resetUserQuota() {
+  const userId = getCurrentUserId();
+  try {
+    const res = await fetch(`${API_BASE_URL}/user-quota/reset`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+      body: JSON.stringify({ user_id: userId })
+    });
+    const json = await res.json();
+    localStorage.setItem('matrimony_user_views_count', '0');
+    localStorage.removeItem('matrimony_viewed_candidate_ids');
+    if (json && json.profile_created_at) {
+      localStorage.setItem('matrimony_profile_created_at', json.profile_created_at);
+      localStorage.setItem('matrimony_profile_expires_at', json.expires_at);
+      localStorage.setItem('matrimony_profile_days_remaining', String(json.days_remaining !== undefined ? json.days_remaining : 90));
+      localStorage.setItem('matrimony_profile_is_expired', 'false');
+    }
+    return json;
+  } catch (err) {
+    return null;
+  }
+}
+
+// Simulate reaching the 75 view limit (for evaluation/demo)
+async function simulateLimitQuota() {
+  const userId = getCurrentUserId();
+  try {
+    const res = await fetch(`${API_BASE_URL}/user-quota/simulate-limit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+      body: JSON.stringify({ user_id: userId })
+    });
+    const json = await res.json();
+    localStorage.setItem('matrimony_user_views_count', '75');
+    return json;
+  } catch (err) {
+    return null;
+  }
+}
+
+// Simulate reaching the 3-month profile validity expiration (for evaluation/demo)
+async function simulateExpiryQuota() {
+  const userId = getCurrentUserId();
+  try {
+    const res = await fetch(`${API_BASE_URL}/user-quota/simulate-expiry`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+      body: JSON.stringify({ user_id: userId })
+    });
+    const json = await res.json();
+    if (json && json.success) {
+      localStorage.setItem('matrimony_profile_is_expired', 'true');
+      localStorage.setItem('matrimony_profile_days_remaining', '0');
+      if (json.expires_at) localStorage.setItem('matrimony_profile_expires_at', json.expires_at);
+    }
+    return json;
+  } catch (err) {
+    return null;
+  }
+}
+
+// Save User Photo into Database
+async function saveUserPhotoToApi(photoData, caption = 'Profile Photo') {
+  const userId = getCurrentUserId();
+  try {
+    const res = await fetch(`${API_BASE_URL}/user-photo`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': userId
+      },
+      body: JSON.stringify({
+        photo_data: photoData,
+        caption: caption,
+        is_primary: true,
+        user_id: userId
+      })
+    });
+    const json = await res.json();
+    if (json && json.success) {
+      if (json.photo_url) {
+        localStorage.setItem('matrimony_user_photo_url', json.photo_url);
+      }
+    }
+    return json;
+  } catch (err) {
+    console.warn('API user-photo error, storing locally:', err.message);
+    localStorage.setItem('matrimony_user_photo_url', photoData);
+    return {
+      success: true,
+      photo_url: photoData,
+      is_offline: true
+    };
+  }
+}
+
+// Save User Biodata into Database
+async function saveUserBiodataToApi(biodata) {
+  const userId = getCurrentUserId();
+  try {
+    const res = await fetch(`${API_BASE_URL}/biodata`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': userId
+      },
+      body: JSON.stringify({
+        ...biodata,
+        user_id: userId
+      })
+    });
+    const json = await res.json();
+    if (json && json.success) {
+      localStorage.setItem('matrimony_user_biodata', JSON.stringify(json.data));
+      if (biodata.gender) {
+        setUserGender(biodata.gender);
+      }
+    }
+    return json;
+  } catch (err) {
+    console.warn('API biodata error, saving to local cache:', err.message);
+    localStorage.setItem('matrimony_user_biodata', JSON.stringify(biodata));
+    if (biodata.gender) {
+      setUserGender(biodata.gender);
+    }
+    return {
+      success: true,
+      data: biodata,
+      is_offline: true
+    };
+  }
+}
+
+// Fetch User Biodata from Database
+async function fetchUserBiodataFromApi() {
+  const userId = getCurrentUserId();
+  try {
+    const res = await fetch(`${API_BASE_URL}/biodata?user_id=${encodeURIComponent(userId)}`, {
+      headers: { 'x-user-id': userId }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    if (json && json.success && json.data) {
+      localStorage.setItem('matrimony_user_biodata', JSON.stringify(json.data));
+      return json.data;
+    }
+  } catch (err) {
+    console.warn('Could not fetch biodata from API:', err.message);
+  }
+
+  // Fallback to local cache
+  const cached = localStorage.getItem('matrimony_user_biodata');
+  if (cached) {
+    try {
+      return JSON.parse(cached);
+    } catch (e) {}
+  }
+  return null;
+}
+
+
+// Helper to generate candidate card HTML - Displays only the "View Profile" button
+function createCandidateCard(candidate) {
   return `
     <article class="candidate-card" data-id="${candidate.id}" data-age="${candidate.age}" data-height="${candidate.height}">
       <div class="candidate-media-wrap">
         <img src="${candidate.photo}" alt="${candidate.name}" class="candidate-img" loading="lazy">
         <div class="candidate-gradient-overlay"></div>
-        
-        <div class="match-score-badge">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="#34d399"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-          <span>${candidate.matchScore}% Match</span>
-        </div>
-
-        <button type="button" class="btn-shortlist-float ${isShortlisted ? 'favorited' : ''}" 
-          onclick="toggleCandidateShortlist('${candidate.id}')" 
-          aria-label="Shortlist ${candidate.name}"
-          title="${isShortlisted ? 'Remove from shortlist' : 'Add to shortlist'}">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="${isShortlisted ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-          </svg>
-        </button>
-
         <div class="candidate-media-footer">
           <div class="candidate-card-name">
             ${candidate.name}
-            ${candidate.isVerified ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="#60a5fa" stroke="none" title="Verified Jain Profile"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>` : ''}
           </div>
           <div class="candidate-card-id">${candidate.id} · ${candidate.age} Yrs · ${candidate.height} Ft</div>
         </div>
@@ -366,58 +645,101 @@ function createCandidateCard(candidate) {
       </div>
 
       <div class="candidate-card-actions">
-        <button type="button" class="btn btn-secondary btn-sm" onclick="openCandidateDetailModal('${candidate.id}')">
-          <span>View Bio</span>
-        </button>
-        <button type="button" class="btn ${isExpressed ? 'btn-secondary' : 'btn-primary'} btn-sm" id="btn-interest-${candidate.id}" onclick="expressInterest('${candidate.id}')">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-          <span>${isExpressed ? 'Interest Sent' : 'Connect'}</span>
+        <button type="button" class="btn btn-primary" onclick="openCandidateDetailModal('${candidate.id}')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          <span>View Profile</span>
         </button>
       </div>
     </article>
   `;
 }
 
-// Local Storage helpers for dynamic client-side interactions
-function getShortlist() {
+// Local Storage & API helpers for Recently Viewed Profiles
+function getRecentlyViewed() {
   try {
-    return JSON.parse(localStorage.getItem('matrimony_shortlist')) || ["JAIN-1001", "JAIN-1004"];
+    return JSON.parse(localStorage.getItem('matrimony_recently_viewed')) || [];
   } catch(e) {
     return [];
   }
 }
 
-function isCandidateShortlisted(id) {
-  return getShortlist().includes(id);
-}
+function addRecentlyViewed(id) {
+  if (!id) return;
+  let list = getRecentlyViewed();
+  // Place latest viewed profile at the very top (index 0)
+  list = list.filter(item => item !== id);
+  list.unshift(id);
+  // Cap at 75 recent profiles
+  if (list.length > 75) list = list.slice(0, 75);
+  localStorage.setItem('matrimony_recently_viewed', JSON.stringify(list));
 
-function toggleCandidateShortlist(id) {
-  let list = getShortlist();
-  const candidate = CANDIDATE_DATABASE.find(c => c.id === id);
-  const name = candidate ? candidate.name : id;
-  
-  if (list.includes(id)) {
-    list = list.filter(item => item !== id);
-    if (window.toast) window.toast.show(`Removed ${name} from your shortlist`, 'info');
-  } else {
-    list.push(id);
-    if (window.toast) window.toast.show(`Added ${name} to your shortlisted Jain profiles! ⭐`, 'success');
+  // Trigger callback if current page is listening
+  if (typeof window.onRecentlyViewedUpdated === 'function') {
+    window.onRecentlyViewedUpdated();
   }
-  
-  localStorage.setItem('matrimony_shortlist', JSON.stringify(list));
-  
-  const buttons = document.querySelectorAll(`button[onclick="toggleCandidateShortlist('${id}')"]`);
-  buttons.forEach(btn => {
-    const isNowShortlisted = list.includes(id);
-    btn.classList.toggle('favorited', isNowShortlisted);
-    btn.querySelector('svg').setAttribute('fill', isNowShortlisted ? 'currentColor' : 'none');
-    btn.title = isNowShortlisted ? 'Remove from shortlist' : 'Add to shortlist';
-  });
 
-  if (typeof window.onShortlistUpdated === 'function') {
-    window.onShortlistUpdated();
+  // Update on-page recently viewed stat count if element exists
+  const countEl = document.getElementById('stat-recently-viewed-count');
+  if (countEl) {
+    countEl.textContent = list.length;
   }
 }
+
+function clearRecentlyViewed() {
+  localStorage.removeItem('matrimony_recently_viewed');
+  if (typeof window.onRecentlyViewedUpdated === 'function') {
+    window.onRecentlyViewedUpdated();
+  }
+  const countEl = document.getElementById('stat-recently-viewed-count');
+  if (countEl) countEl.textContent = '0';
+}
+
+// Fetch recently viewed profiles directly from PostgreSQL backend
+async function fetchRecentlyViewedFromApi() {
+  const userId = getCurrentUserId();
+  try {
+    const res = await fetch(`${API_BASE_URL}/recently-viewed?user_id=${encodeURIComponent(userId)}`, {
+      headers: { 'x-user-id': userId }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    if (json.success && Array.isArray(json.data)) {
+      return json.data.map(item => ({
+        id: item.id,
+        name: item.name,
+        gender: item.gender,
+        age: item.age,
+        height: item.height,
+        religion: item.religion,
+        sub_caste: item.sub_caste,
+        gothram: item.gothram,
+        education: item.education,
+        occupation: item.occupation,
+        company: item.company,
+        annualIncome: item.annual_income,
+        location: `${item.city}, ${item.state}`,
+        city: item.city,
+        motherTongue: item.mother_tongue,
+        maritalStatus: item.marital_status,
+        diet: item.diet,
+        matchScore: item.match_score,
+        isVerified: item.is_verified,
+        isPremium: item.is_premium,
+        photo: item.photo_url,
+        about: item.about_me,
+        interests: item.interests || []
+      }));
+    }
+  } catch (err) {
+    console.warn('Fallback to localStorage recently viewed:', err.message);
+  }
+  return null;
+}
+
+// Compatibility stubs for any legacy references
+function getShortlist() { return getRecentlyViewed(); }
+function isCandidateShortlisted(id) { return getRecentlyViewed().includes(id); }
+function toggleCandidateShortlist(id) { addRecentlyViewed(id); }
 
 function getInterests() {
   try {
@@ -453,5 +775,244 @@ function expressInterest(id) {
       <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
       <span>Interest Sent</span>
     `;
+  }
+}
+
+// ============================================================================
+// ADMIN PANEL CLIENT CONNECTOR FUNCTIONS
+// ============================================================================
+
+function getAdminAuthKey() {
+  return sessionStorage.getItem('matrimony_admin_key') || localStorage.getItem('matrimony_admin_key') || '';
+}
+
+function setAdminAuthKey(key) {
+  sessionStorage.setItem('matrimony_admin_key', key);
+  sessionStorage.setItem('matrimony_admin_authenticated', 'true');
+  localStorage.setItem('matrimony_admin_key', key);
+}
+
+function isAdminAuthenticated() {
+  return Boolean(sessionStorage.getItem('matrimony_admin_authenticated') === 'true' && getAdminAuthKey());
+}
+
+function adminLogout() {
+  sessionStorage.removeItem('matrimony_admin_key');
+  sessionStorage.removeItem('matrimony_admin_authenticated');
+  localStorage.removeItem('matrimony_admin_key');
+}
+
+async function adminLogin(passkey) {
+  const url = `${API_BASE_URL}/admin/login`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ passkey })
+  });
+  const json = await res.json();
+  if (!res.ok || !json.success) {
+    throw new Error(json.error || 'Authentication failed: Invalid admin passkey.');
+  }
+  setAdminAuthKey(json.token || passkey);
+  return json;
+}
+
+// Fetch candidate list with search, filter, and pagination for Admin Panel
+async function fetchAdminCandidates(params = {}) {
+  const queryParts = [];
+  if (params.search) queryParts.push(`search=${encodeURIComponent(params.search)}`);
+  if (params.gender) queryParts.push(`gender=${encodeURIComponent(params.gender)}`);
+  if (params.sub_caste) queryParts.push(`sub_caste=${encodeURIComponent(params.sub_caste)}`);
+  if (params.city) queryParts.push(`city=${encodeURIComponent(params.city)}`);
+  if (params.is_verified !== undefined && params.is_verified !== '') queryParts.push(`is_verified=${encodeURIComponent(params.is_verified)}`);
+  if (params.sort_by) queryParts.push(`sort_by=${encodeURIComponent(params.sort_by)}`);
+  if (params.order) queryParts.push(`order=${encodeURIComponent(params.order)}`);
+  if (params.page) queryParts.push(`page=${encodeURIComponent(params.page)}`);
+  if (params.limit) queryParts.push(`limit=${encodeURIComponent(params.limit)}`);
+
+  const qs = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
+  const url = `${API_BASE_URL}/admin/candidates${qs}`;
+
+  const res = await fetch(url, {
+    headers: {
+      'x-admin-key': getAdminAuthKey()
+    }
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+  return await res.json();
+}
+
+// Fetch single candidate full profile for Admin
+async function fetchAdminCandidateById(id) {
+  const url = `${API_BASE_URL}/admin/candidates/${encodeURIComponent(id)}`;
+  const res = await fetch(url, {
+    headers: {
+      'x-admin-key': getAdminAuthKey()
+    }
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+  return await res.json();
+}
+
+// Create new candidate profile
+async function createAdminCandidate(candidateData) {
+  const url = `${API_BASE_URL}/admin/candidates`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-admin-key': getAdminAuthKey()
+    },
+    body: JSON.stringify(candidateData)
+  });
+  const json = await res.json();
+  if (!res.ok || !json.success) {
+    throw new Error(json.error || `HTTP ${res.status}`);
+  }
+  return json;
+}
+
+// Update existing candidate profile
+async function updateAdminCandidate(id, candidateData) {
+  const url = `${API_BASE_URL}/admin/candidates/${encodeURIComponent(id)}`;
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-admin-key': getAdminAuthKey()
+    },
+    body: JSON.stringify(candidateData)
+  });
+  const json = await res.json();
+  if (!res.ok || !json.success) {
+    throw new Error(json.error || `HTTP ${res.status}`);
+  }
+  return json;
+}
+
+// Delete candidate profile by ID
+async function deleteAdminCandidate(id) {
+  const url = `${API_BASE_URL}/admin/candidates/${encodeURIComponent(id)}`;
+  const res = await fetch(url, {
+    method: 'DELETE',
+    headers: {
+      'x-admin-key': getAdminAuthKey()
+    }
+  });
+  const json = await res.json();
+  if (!res.ok || !json.success) {
+    throw new Error(json.error || `HTTP ${res.status}`);
+  }
+  return json;
+}
+
+// Fetch admin analytics stats
+async function fetchAdminStats() {
+  const url = `${API_BASE_URL}/admin/stats`;
+  const res = await fetch(url, {
+    headers: {
+      'x-admin-key': getAdminAuthKey()
+    }
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+  return await res.json();
+}
+
+// Fetch all registered user accounts for Admin
+async function fetchAdminUsers() {
+  const url = `${API_BASE_URL}/admin/users`;
+  const res = await fetch(url, {
+    headers: {
+      'x-admin-key': getAdminAuthKey()
+    }
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+  return await res.json();
+}
+
+// Activate a user account by Admin (allows viewing candidate contact coordinates)
+async function activateAdminUser(userId) {
+  const url = `${API_BASE_URL}/admin/users/${encodeURIComponent(userId)}/activate`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'x-admin-key': getAdminAuthKey()
+    }
+  });
+  const json = await res.json();
+  if (!res.ok || !json.success) {
+    throw new Error(json.error || `HTTP ${res.status}`);
+  }
+  return json;
+}
+
+// Deactivate a user account by Admin
+async function deactivateAdminUser(userId) {
+  const url = `${API_BASE_URL}/admin/users/${encodeURIComponent(userId)}/deactivate`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'x-admin-key': getAdminAuthKey()
+    }
+  });
+  const json = await res.json();
+  if (!res.ok || !json.success) {
+    throw new Error(json.error || `HTTP ${res.status}`);
+  }
+  return json;
+}
+
+// Activate candidate profile by Admin
+async function activateAdminCandidate(candidateId) {
+  const url = `${API_BASE_URL}/admin/candidates/${encodeURIComponent(candidateId)}/activate`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'x-admin-key': getAdminAuthKey()
+    }
+  });
+  return await res.json();
+}
+
+// Deactivate candidate profile by Admin
+async function deactivateAdminCandidate(candidateId) {
+  const url = `${API_BASE_URL}/admin/candidates/${encodeURIComponent(candidateId)}/deactivate`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'x-admin-key': getAdminAuthKey()
+    }
+  });
+  return await res.json();
+}
+
+// Quick toggle current user active status (for demo and testing)
+async function toggleUserActivation() {
+  const userId = getCurrentUserId();
+  try {
+    const res = await fetch(`${API_BASE_URL}/user-quota/toggle-active`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': userId }
+    });
+    const json = await res.json();
+    if (json && json.success) {
+      localStorage.setItem('matrimony_profile_is_active', String(Boolean(json.is_active)));
+    }
+    return json;
+  } catch (err) {
+    return null;
   }
 }

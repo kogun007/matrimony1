@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recently Viewed Profiles | LivePartner Matrimony</title>
+  <meta name="description" content="View candidate profiles you have recently inspected on LivePartner Matrimony.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/layout.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+
+  <div class="app-shell">
+    <div class="ambient-glow glow-top-right"></div>
+    <div class="ambient-glow glow-bottom-left"></div>
+
+    <!-- Collapsible Navigation Mount -->
+    <div id="sidebar-mount"></div>
+
+    <!-- Main Content Area -->
+    <div class="app-main">
+      
+      <!-- Topbar -->
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <button type="button" class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle navigation drawer">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+
+          <div class="topbar-title-group">
+            <h1 class="topbar-page-title">Recently Viewed Profiles</h1>
+            <span class="topbar-badge" id="recent-topbar-count">0 Profiles</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <button type="button" class="btn btn-secondary btn-sm" id="btnClearRecent" onclick="handleClearRecent()" style="display: none;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            <span>Clear History</span>
+          </button>
+          <a href="search.html" class="btn btn-primary btn-sm">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <span>Search Candidates</span>
+          </a>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <main class="content-container">
+        
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h2 style="font-size: 1.75rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.25rem;">
+              Profiles You Recently Inspected
+            </h2>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">
+              Revisit profiles you previously opened and check their bio, horoscope, or contact details.
+            </p>
+          </div>
+        </div>
+
+        <!-- Recently Viewed Candidate Grid Mount -->
+        <div class="candidates-grid" id="recentlyViewedGrid">
+          <!-- Rendered dynamically by JS -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="recentEmptyState" class="card" style="display: none; text-align: center; padding: 4rem 1.5rem;">
+          <div style="width: 64px; height: 64px; margin: 0 auto 1.25rem; border-radius: 50%; background: #eef2ff; color: var(--primary); display: flex; align-items: center; justify-content: center;">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </div>
+          <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.5rem;">No Recently Viewed Profiles Yet</h3>
+          <p style="color: var(--text-muted); max-width: 440px; margin: 0 auto 1.5rem; font-size: 0.95rem;">
+            When you click "View Profile" on any candidate card in Partner Search or Dashboard, they will be automatically cataloged here for quick review.
+          </p>
+          <a href="search.html" class="btn btn-primary">Find Candidates</a>
+        </div>
+
+      </main>
+
+      <!-- App Footer -->
+      <footer class="app-footer">
+        <div>&copy; 2026 LivePartner Matrimony. All rights reserved.</div>
+        <div class="footer-links">
+          <a href="index.html">Dashboard</a>
+          <a href="search.html">Search</a>
+          <a href="profile.html">Profile</a>
+          <a href="login.html">Sign In</a>
+        </div>
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- Reusable Components -->
+  <script src="js/data/candidates.js"></script>
+  <script src="js/components/toast.js"></script>
+  <script src="js/components/modal.js"></script>
+  <script src="js/components/navigation.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      new MatrimonyNavigation({ activePage: 'recently-viewed' });
+      loadAndRenderRecentProfiles();
+    });
+
+    // Reactive callback when candidate profile is viewed from modal
+    window.onRecentlyViewedUpdated = function() {
+      loadAndRenderRecentProfiles();
+    };
+
+    async function loadAndRenderRecentProfiles() {
+      const mount = document.getElementById('recentlyViewedGrid');
+      const emptyState = document.getElementById('recentEmptyState');
+      const countBadge = document.getElementById('recent-topbar-count');
+      const btnClear = document.getElementById('btnClearRecent');
+
+      let recentCandidates = [];
+
+      // 1. Try fetching live recently viewed list from PostgreSQL API
+      if (typeof fetchRecentlyViewedFromApi === 'function') {
+        const apiList = await fetchRecentlyViewedFromApi();
+        if (Array.isArray(apiList) && apiList.length > 0) {
+          recentCandidates = apiList;
+        }
+      }
+
+      // 2. Fallback to local storage history if API returned empty
+      if (recentCandidates.length === 0 && typeof CANDIDATE_DATABASE !== 'undefined') {
+        const listIds = getRecentlyViewed();
+        recentCandidates = listIds
+          .map(id => CANDIDATE_DATABASE.find(c => c.id === id))
+          .filter(Boolean);
+      }
+
+      // Update Topbar badge
+      if (countBadge) {
+        countBadge.textContent = `${recentCandidates.length} Profile${recentCandidates.length === 1 ? '' : 's'}`;
+      }
+
+      // Show/Hide Clear button
+      if (btnClear) {
+        btnClear.style.display = recentCandidates.length > 0 ? 'inline-flex' : 'none';
+      }
+
+      // Render items or empty state
+      if (recentCandidates.length === 0) {
+        mount.innerHTML = '';
+        mount.style.display = 'none';
+        emptyState.style.display = 'block';
+      } else {
+        mount.style.display = 'grid';
+        emptyState.style.display = 'none';
+        mount.innerHTML = recentCandidates.map(c => createCandidateCard(c)).join('');
+      }
+    }
+
+    function handleClearRecent() {
+      if (confirm('Clear your recently viewed candidate profiles history?')) {
+        clearRecentlyViewed();
+        loadAndRenderRecentProfiles();
+        if (window.toast) window.toast.show('Recently viewed history cleared', 'info');
+      }
+    }
+  </script>
+</body>
+</html>

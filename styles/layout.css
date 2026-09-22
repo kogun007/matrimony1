@@ -475,12 +475,27 @@ body.sidebar-collapsed .app-main {
     display: flex;
   }
 
+  .app-topbar {
+    padding: 0 1.25rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .topbar-page-title {
+    font-size: 1.1rem;
+  }
+
   .content-container {
-    padding: 1.5rem 1.25rem 2.5rem;
+    padding: 1.25rem 1rem 3rem;
   }
 
   .app-topbar {
-    padding: 0 1.25rem;
+    padding: 0 1rem;
+    height: 60px;
+  }
+
+  .topbar-badge {
+    display: none; /* Hide non-critical badge on very narrow screens */
   }
 }
 

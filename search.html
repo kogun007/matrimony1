@@ -81,8 +81,17 @@
 
         <div class="search-layout-grid">
           
+          <!-- Mobile Filter Toggle Bar (Visible on mobile/tablet) -->
+          <div class="mobile-filter-bar" id="mobileFilterBar" onclick="toggleMobileSearchFilters()" role="button" aria-expanded="false" aria-controls="searchFilterCard">
+            <div class="mobile-filter-bar-left">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+              <span>Filters & Preferences</span>
+            </div>
+            <svg class="mobile-filter-chevron" id="filterChevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+
           <!-- Search Parameters Filter Card (Left Column) -->
-          <div class="card" style="box-shadow: var(--shadow-card);">
+          <div class="card" id="searchFilterCard" style="box-shadow: var(--shadow-card);">
             <div class="card-header" style="background: var(--surface-hover);">
               <h3 class="card-title" style="display: flex; align-items: center; gap: 0.5rem;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
@@ -249,7 +258,7 @@
         <div>&copy; 2026 LivePartner Matrimony. All rights reserved.</div>
         <div class="footer-links">
           <a href="index.html">Dashboard</a>
-          <a href="matches.html">Matches</a>
+          <a href="recently-viewed.html">Recently Viewed</a>
           <a href="profile.html">Profile</a>
           <a href="login.html">Sign In</a>
         </div>
@@ -338,12 +347,21 @@
       const maxAge = parseInt(document.getElementById('age-slider').value, 10);
       const minHeight = parseFloat(document.getElementById('height-slider').value);
       const subCaste = document.getElementById('subcaste-select') ? document.getElementById('subcaste-select').value : '';
-      const marital = document.getElementById('marital-select') ? document.getElementById('marital-select').value : '';
+      const targetGender = getOppositeGender();
+      const userG = getUserGender();
+      const oppLabel = targetGender === 'Female' ? 'Brides' : 'Grooms';
+
+      // Update topbar gender toggle
+      const uLabel = document.getElementById('userGenderLabel');
+      if (uLabel) uLabel.textContent = `I am: ${userG}`;
+      const oBadge = document.getElementById('oppositeGenderLabel');
+      if (oBadge) oBadge.textContent = `Viewing ${oppLabel}`;
 
       let results = [];
       try {
-        // Fetch from PostgreSQL API
+        // Fetch from PostgreSQL API with opposite gender enforcement
         const params = new URLSearchParams();
+        params.append('gender', targetGender);
         if (candidateIdQuery) params.append('query', candidateIdQuery);
         if (maxAge) params.append('age_max', maxAge);
         if (minHeight) params.append('height_min', minHeight);
@@ -382,8 +400,9 @@
           }
         }
       } catch (e) {
-        // Fallback to local array
+        // Fallback to local array with opposite gender filter
         results = CANDIDATE_DATABASE.filter(c => {
+          if (c.gender && c.gender.toLowerCase() !== targetGender.toLowerCase()) return false;
           if (candidateIdQuery && !c.id.toLowerCase().includes(candidateIdQuery) && !c.name.toLowerCase().includes(candidateIdQuery)) {
             return false;
           }
@@ -403,14 +422,19 @@
         mount.innerHTML = '';
         mount.style.display = 'none';
         noResultsBox.style.display = 'block';
-        countText.textContent = 'No matching Jain candidates found';
+        countText.textContent = `No matching ${oppLabel} found`;
       } else {
         mount.style.display = 'grid';
         noResultsBox.style.display = 'none';
         mount.innerHTML = results.map(c => createCandidateCard(c)).join('');
-        countText.textContent = `Showing ${results.length} matching Jain candidate${results.length === 1 ? '' : 's'} (PostgreSQL)`;
+        countText.textContent = `Showing ${results.length} matching ${oppLabel} (${targetGender}) for ${userG} user`;
       }
     }
+
+    // Re-filter when gender toggle is pressed
+    window.addEventListener('userGenderChanged', () => {
+      filterCandidates();
+    });
 
     function handleSearchSubmit(e) {
       e.preventDefault();
@@ -442,6 +466,19 @@
       updateSliderTrack(heightSlider);
       filterCandidates();
       window.toast.show('All search filters reset.', 'info');
+    }
+
+    function toggleMobileSearchFilters() {
+      const card = document.getElementById('searchFilterCard');
+      const chevron = document.getElementById('filterChevron');
+      const bar = document.getElementById('mobileFilterBar');
+      if (card) {
+        const isVisible = card.classList.toggle('mobile-visible');
+        if (bar) bar.setAttribute('aria-expanded', String(isVisible));
+      }
+      if (chevron) {
+        chevron.classList.toggle('expanded');
+      }
     }
   </script>
 </body>

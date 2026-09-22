@@ -12,9 +12,7 @@ class MatrimonyNavigation {
   constructor(options = {}) {
     this.activePage = options.activePage || this.detectCurrentPage();
     this.badgeCounts = options.badgeCounts || {
-      matches: 12,
-      messages: 3,
-      shortlist: 5
+      recentlyViewed: (typeof getRecentlyViewed === 'function') ? getRecentlyViewed().length : null
     };
     this.init();
   }
@@ -24,10 +22,8 @@ class MatrimonyNavigation {
     const page = path.split('/').pop() || 'index.html';
     if (page === '' || page === 'index.html') return 'dashboard';
     if (page.includes('search')) return 'search';
-    if (page.includes('matches')) return 'matches';
     if (page.includes('profile')) return 'profile';
-    if (page.includes('messages')) return 'messages';
-    if (page.includes('shortlist')) return 'shortlist';
+    if (page.includes('recently-viewed') || page.includes('shortlist')) return 'recently-viewed';
     if (page.includes('login')) return 'login';
     return 'dashboard';
   }
@@ -46,6 +42,19 @@ class MatrimonyNavigation {
     const isSubdir = window.location.pathname.includes('/login_page/') || window.location.pathname.includes('/search_page/');
     const prefix = isSubdir ? '../' : '';
 
+    const loggedIn = (typeof isUserLoggedIn === 'function') ? isUserLoggedIn() : (localStorage.getItem('matrimony_is_logged_in') !== 'false');
+
+    // Retrieve custom user details if available
+    let userBiodata = null;
+    try {
+      const bioStr = localStorage.getItem('matrimony_user_biodata');
+      if (bioStr) userBiodata = JSON.parse(bioStr);
+    } catch(e) {}
+
+    const userName = userBiodata?.full_name || 'Priya Sharma';
+    const userPhoto = localStorage.getItem('matrimony_user_photo_url') || userBiodata?.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80';
+    const userId = localStorage.getItem('matrimony_user_id') || 'LPS-88421';
+
     const navItems = [
       {
         section: 'Discovery'
@@ -63,28 +72,14 @@ class MatrimonyNavigation {
         icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`
       },
       {
-        id: 'matches',
-        label: 'Daily Matches',
-        href: `${prefix}matches.html`,
-        badge: this.badgeCounts.matches,
-        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`
+        section: 'Activity'
       },
       {
-        section: 'Connections'
-      },
-      {
-        id: 'messages',
-        label: 'Messages & Interests',
-        href: `${prefix}messages.html`,
-        badge: this.badgeCounts.messages,
-        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>`
-      },
-      {
-        id: 'shortlist',
-        label: 'Shortlisted Profiles',
-        href: `${prefix}shortlist.html`,
-        badge: this.badgeCounts.shortlist,
-        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`
+        id: 'recently-viewed',
+        label: 'Recently Viewed',
+        href: `${prefix}recently-viewed.html`,
+        badge: this.badgeCounts.recentlyViewed,
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`
       },
       {
         section: 'Account & Settings'
@@ -94,20 +89,26 @@ class MatrimonyNavigation {
         label: 'My Profile',
         href: `${prefix}profile.html`,
         icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`
-      },
-      {
-        id: 'template',
-        label: 'Page Template',
-        href: `${prefix}template.html`,
-        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>`
-      },
-      {
+      }
+    ];
+
+    if (loggedIn) {
+      navItems.push({
+        id: 'logout',
+        label: 'Log Out',
+        href: '#',
+        isAction: true,
+        action: 'logout',
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>`
+      });
+    } else {
+      navItems.push({
         id: 'login',
         label: 'Sign In / Register',
         href: `${prefix}login.html`,
         icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>`
-      }
-    ];
+      });
+    }
 
     let navHtml = '';
     navItems.forEach(item => {
@@ -116,8 +117,9 @@ class MatrimonyNavigation {
       } else {
         const isActive = this.activePage === item.id;
         const badgeHtml = item.badge ? `<span class="nav-badge">${item.badge}</span>` : '';
+        const actionAttr = item.isAction ? `data-action="${item.action}" onclick="logoutUser(); return false;"` : '';
         navHtml += `
-          <a href="${item.href}" class="nav-item ${isActive ? 'active' : ''}" data-tooltip="${item.label}">
+          <a href="${item.href}" class="nav-item ${isActive ? 'active' : ''} ${item.id === 'logout' ? 'nav-item-logout' : ''}" data-tooltip="${item.label}" ${actionAttr}>
             <span class="nav-icon">${item.icon}</span>
             <span class="nav-label">${item.label}</span>
             ${badgeHtml}
@@ -159,21 +161,57 @@ class MatrimonyNavigation {
 
         <!-- Current User Profile Chip -->
         <div class="sidebar-footer">
-          <a href="${prefix}profile.html" class="user-profile-chip" title="View Profile">
-            <div class="avatar-wrapper">
-              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80" alt="User Profile" class="avatar-img">
-              <span class="status-indicator" title="Online"></span>
-            </div>
-            <div class="user-details">
-              <div class="user-name">Priya Sharma</div>
-              <div class="user-status">ID: LPS-88421 · Premium</div>
-            </div>
-          </a>
+          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 0.5rem;">
+            <a href="${loggedIn ? `${prefix}profile.html` : `${prefix}login.html`}" class="user-profile-chip" title="${loggedIn ? 'View Profile' : 'Sign In'}" style="flex: 1; min-width: 0; text-decoration: none;">
+              <div class="avatar-wrapper">
+                <img src="${userPhoto}" alt="${userName}" class="avatar-img">
+                <span class="status-indicator" title="${loggedIn ? 'Online' : 'Offline'}" style="${!loggedIn ? 'background: var(--text-light);' : ''}"></span>
+              </div>
+              <div class="user-details">
+                <div class="user-name" style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${loggedIn ? userName : 'Guest User'}</div>
+                <div class="user-status">${loggedIn ? 'Member · Online' : 'Click to Sign In'}</div>
+              </div>
+            </a>
+            ${loggedIn ? `
+              <button type="button" class="btn-sidebar-logout" onclick="logoutUser()" title="Log Out" aria-label="Log Out" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0.45rem; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; transition: all var(--transition-fast);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              </button>
+            ` : ''}
+          </div>
         </div>
       </aside>
 
       <!-- Mobile Backdrop Overlay -->
       <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+      <!-- Native-Style Mobile Bottom Navigation Bar -->
+      <nav class="mobile-bottom-nav" aria-label="Mobile Navigation">
+        <a href="${prefix}index.html" class="mobile-nav-tab ${this.activePage === 'dashboard' ? 'active' : ''}">
+          <span class="mobile-nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect></svg>
+          </span>
+          <span class="mobile-nav-label">Home</span>
+        </a>
+        <a href="${prefix}search.html" class="mobile-nav-tab ${this.activePage === 'search' ? 'active' : ''}">
+          <span class="mobile-nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          </span>
+          <span class="mobile-nav-label">Search</span>
+        </a>
+        <a href="${prefix}recently-viewed.html" class="mobile-nav-tab ${this.activePage === 'recently-viewed' ? 'active' : ''}">
+          <span class="mobile-nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            ${this.badgeCounts.recentlyViewed ? `<span class="mobile-nav-badge-dot"></span>` : ''}
+          </span>
+          <span class="mobile-nav-label">Recents</span>
+        </a>
+        <a href="${prefix}profile.html" class="mobile-nav-tab ${this.activePage === 'profile' ? 'active' : ''}">
+          <span class="mobile-nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          </span>
+          <span class="mobile-nav-label">Profile</span>
+        </a>
+      </nav>
     `;
   }
 
@@ -199,6 +237,41 @@ class MatrimonyNavigation {
       if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
         e.preventDefault();
         this.toggleCollapse();
+      }
+    });
+
+    // Update footer auth links dynamically based on session status
+    this.updateFooterAuthLinks();
+
+    // Re-render when auth state changes
+    if (!this._hasAuthListener) {
+      this._hasAuthListener = true;
+      window.addEventListener('userAuthStateChanged', () => {
+        this.render();
+        this.bindEvents();
+      });
+    }
+  }
+
+  updateFooterAuthLinks() {
+    const isSubdir = window.location.pathname.includes('/login_page/') || window.location.pathname.includes('/search_page/');
+    const prefix = isSubdir ? '../' : '';
+    const loggedIn = (typeof isUserLoggedIn === 'function') ? isUserLoggedIn() : (localStorage.getItem('matrimony_is_logged_in') !== 'false');
+
+    document.querySelectorAll('.footer-links a[href*="login.html"], .footer-links a.footer-auth-link').forEach(link => {
+      if (loggedIn) {
+        link.textContent = 'Log Out';
+        link.href = '#';
+        link.classList.add('footer-auth-link');
+        link.onclick = (e) => {
+          e.preventDefault();
+          logoutUser();
+        };
+      } else {
+        link.textContent = 'Sign In';
+        link.href = `${prefix}login.html`;
+        link.classList.remove('footer-auth-link');
+        link.onclick = null;
       }
     });
   }

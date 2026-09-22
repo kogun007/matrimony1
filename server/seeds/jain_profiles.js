@@ -25,7 +25,10 @@ const JAIN_PROFILES = [
     is_premium: true,
     photo_url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&h=600&q=80",
     about_me: "Dedicated medical professional rooted in Jain Navkar traditions and Ahimsa principles. Passionate about dermatological research, classical harmonium, and weekend spiritual satsangs. Looking for an educated, culturally grounded Jain partner with progressive family values.",
-    interests: JSON.stringify(["Jain Literature", "Harmonium", "Medical Camps", "Travel", "Yoga"])
+    interests: JSON.stringify(["Jain Literature", "Harmonium", "Medical Camps", "Travel", "Yoga"]),
+    phone: "+91 98201 45892",
+    email: "dr.prisha.mehta@jainmatrimony.org",
+    guardian_contact: "Rajesh Mehta (Father) · +91 98200 11223"
   },
   {
     id: "JAIN-1002",
@@ -50,7 +53,10 @@ const JAIN_PROFILES = [
     is_premium: true,
     photo_url: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=600&h=600&q=80",
     about_me: "Finance professional with an entrepreneurial mindset. Family-oriented, avid badminton player, and regular practitioner of Jain Samayik and meditation. Looking for an ambitious and kind-hearted Jain life partner.",
-    interests: JSON.stringify(["Fintech & Markets", "Badminton", "Vipassana", "Specialty Coffee", "Reading"])
+    interests: JSON.stringify(["Fintech & Markets", "Badminton", "Vipassana", "Specialty Coffee", "Reading"]),
+    phone: "+91 98334 12903",
+    email: "rishabh.shah@jainmatrimony.org",
+    guardian_contact: "Kishore Shah (Father) · +91 98330 99881"
   },
   {
     id: "JAIN-1003",
@@ -75,7 +81,10 @@ const JAIN_PROFILES = [
     is_premium: true,
     photo_url: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&h=600&q=80",
     about_me: "CA rank holder from a respectable Terapanthi Jain family. Enthusiastic about Jain Preksha Dhyan, art curation, and exploring heritage temple architecture. Looking for a partner who values ethical living and career growth.",
-    interests: JSON.stringify(["Preksha Dhyan", "Heritage Architecture", "Financial Modeling", "Classical Dance"])
+    interests: JSON.stringify(["Preksha Dhyan", "Heritage Architecture", "Financial Modeling", "Classical Dance"]),
+    phone: "+91 98450 78219",
+    email: "ananya.singhi@jainmatrimony.org",
+    guardian_contact: "Suresh Singhi (Father) · +91 98451 22334"
   },
   {
     id: "JAIN-1004",
@@ -100,7 +109,10 @@ const JAIN_PROFILES = [
     is_premium: true,
     photo_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=600&h=600&q=80",
     about_me: "Tech leader working on cutting-edge generative AI models. Passionate about vegetarian gastronomy, marathons, and Jain community youth initiatives. Seeking an intellectually compatible Jain partner.",
-    interests: JSON.stringify(["Artificial Intelligence", "Marathon Training", "Jain Philosophy", "Piano"])
+    interests: JSON.stringify(["Artificial Intelligence", "Marathon Training", "Jain Philosophy", "Piano"]),
+    phone: "+91 99002 34812",
+    email: "siddharth.doshi@jainmatrimony.org",
+    guardian_contact: "Mahesh Doshi (Father) · +91 99001 55667"
   },
   {
     id: "JAIN-1005",
@@ -125,7 +137,10 @@ const JAIN_PROFILES = [
     is_premium: false,
     photo_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&h=600&q=80",
     about_me: "Architect passionate about green eco-habitats, Jain temple restoration, and ceramic pottery. Raised with strong Digambar Jain values, Paryushan fasting traditions, and love for nature.",
-    interests: JSON.stringify(["Pottery", "Temple Restoration", "Sustainable Design", "Trekking"])
+    interests: JSON.stringify(["Pottery", "Temple Restoration", "Sustainable Design", "Trekking"]),
+    phone: "+91 97277 88410",
+    email: "tanvi.gandhi@jainmatrimony.org",
+    guardian_contact: "Pravin Gandhi (Father) · +91 97270 44556"
   },
   {
     id: "JAIN-1006",
@@ -150,7 +165,10 @@ const JAIN_PROFILES = [
     is_premium: true,
     photo_url: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=600&h=600&q=80",
     about_me: "Software director with strong ethics and traditional values. Enjoys tennis, playing the sitar, and participating in Jain community seva. Looking for a partner who believes in mutual support, respect, and shared laughter.",
-    interests: JSON.stringify(["Sitar", "Tennis", "Philanthropy", "Astronomy", "Road Trips"])
+    interests: JSON.stringify(["Sitar", "Tennis", "Philanthropy", "Astronomy", "Road Trips"]),
+    phone: "+91 98220 56789",
+    email: "aarav.jain@jainmatrimony.org",
+    guardian_contact: "Dinesh Jain (Father) · +91 98221 66778"
   },
   {
     id: "JAIN-1007",
@@ -175,7 +193,10 @@ const JAIN_PROFILES = [
     is_premium: false,
     photo_url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=600&h=600&q=80",
     about_me: "Cheerful data science enthusiast from a loving Jain family in South Mumbai. Passionate about culinary fusion, chess, and weekend nature walks. Seeking a compassionate and well-educated partner.",
-    interests: JSON.stringify(["Chess", "Jain Culinary Innovation", "Biking", "Podcasts"])
+    interests: JSON.stringify(["Chess", "Jain Culinary Innovation", "Biking", "Podcasts"]),
+    phone: "+91 98190 23456",
+    email: "yashvi.parikh@jainmatrimony.org",
+    guardian_contact: "Hemant Parikh (Father) · +91 98191 88990"
   },
   {
     id: "JAIN-1008",
@@ -200,7 +221,10 @@ const JAIN_PROFILES = [
     is_premium: true,
     photo_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&h=600&q=80",
     about_me: "Legal and taxation partner managing prominent Jain business groups. Active in Jain educational trusts and sports clubs. Looking for a cultured life partner with a warm heart and strong family orientation.",
-    interests: JSON.stringify(["Corporate Law", "Swimming", "Community Seva", "Cricket"])
+    interests: JSON.stringify(["Corporate Law", "Swimming", "Community Seva", "Cricket"]),
+    phone: "+91 98251 67890",
+    email: "bhavik.kothari@jainmatrimony.org",
+    guardian_contact: "Narendra Kothari (Father) · +91 98250 33445"
   },
   {
     id: "JAIN-1009",
@@ -225,7 +249,10 @@ const JAIN_PROFILES = [
     is_premium: false,
     photo_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&h=600&q=80",
     about_me: "Brand strategist from a traditional Jain family in Jaipur. Loves Marwari folk art, baking Jain desserts, and participating in Mahavir Jayanti cultural programs. Looking for an educated, understanding partner.",
-    interests: JSON.stringify(["Brand Design", "Marwari Art", "Baking", "Cultural Events"])
+    interests: JSON.stringify(["Brand Design", "Marwari Art", "Baking", "Cultural Events"]),
+    phone: "+91 98290 34567",
+    email: "jhanvi.bhandari@jainmatrimony.org",
+    guardian_contact: "Ashok Bhandari (Father) · +91 98291 55667"
   },
   {
     id: "JAIN-1010",
@@ -250,7 +277,10 @@ const JAIN_PROFILES = [
     is_premium: true,
     photo_url: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=600&h=600&q=80",
     about_me: "Clean energy entrepreneur motivated by Jain principles of environmental stewardship (Aparigraha & Jiva Raksha). Keen squash player, meditator, and angel investor. Seeking a partner to share life's purposeful journey.",
-    interests: JSON.stringify(["Clean Energy", "Squash", "Meditation", "Angel Investing", "Trekking"])
+    interests: JSON.stringify(["Clean Energy", "Squash", "Meditation", "Angel Investing", "Trekking"]),
+    phone: "+91 98110 78901",
+    email: "moksh.chordia@jainmatrimony.org",
+    guardian_contact: "Virendra Chordia (Father) · +91 98111 22334"
   }
 ];
 

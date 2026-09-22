@@ -1,0 +1,135 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+concurrency:
+  group: 'ci-cd-${{ github.ref }}'
+  cancel-in-progress: true
+
+jobs:
+  # ==========================================
+  # CI: Syntax, Dependencies & Quality Checks
+  # ==========================================
+  ci-validation:
+    name: CI - Lint & Syntax Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'server/package.json'
+
+      - name: Install Server Dependencies
+        run: |
+          cd server
+          npm install
+
+      - name: Run Backend Syntax & Unit Checks
+        run: |
+          cd server
+          npm test
+
+      - name: Validate Cloudflare Pages Functions Syntax
+        run: |
+          if [ -d "functions" ]; then
+            find functions -type f -name "*.js" -exec node --check {} +
+            echo "All Cloudflare Functions passed syntax validation."
+          fi
+
+      - name: Validate Frontend JavaScript Syntax
+        run: |
+          if [ -d "js" ]; then
+            find js -type f -name "*.js" -exec node --check {} +
+            echo "All Client JS modules passed syntax validation."
+          fi
+
+      - name: Verify Core Web Pages Exist
+        run: |
+          required_pages=("index.html" "search.html" "profile.html" "login.html" "admin.html")
+          for page in "${required_pages[@]}"; do
+            if [ ! -f "$page" ]; then
+              echo "Error: Required page $page is missing!"
+              exit 1
+            fi
+          done
+          echo "All critical HTML files verified."
+
+  # ==========================================
+  # CD: Deploy Frontend to GitHub Pages
+  # ==========================================
+  deploy-github-pages:
+    name: CD - Deploy to GitHub Pages
+    needs: ci-validation
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # ==========================================
+  # CD: Cloudflare Pages Deployment (Optional)
+  # ==========================================
+  deploy-cloudflare-pages:
+    name: CD - Deploy to Cloudflare Pages
+    needs: ci-validation
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Cloudflare Secrets
+        id: check_secrets
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ] && [ -n "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" ]; then
+            echo "configured=true" >> $GITHUB_OUTPUT
+          else
+            echo "configured=false" >> $GITHUB_OUTPUT
+            echo "Cloudflare secrets not detected. Skipping Cloudflare Pages deploy."
+          fi
+
+      - name: Checkout Code
+        if: steps.check_secrets.outputs.configured == 'true'
+        uses: actions/checkout@v4
+
+      - name: Deploy to Cloudflare Pages
+        if: steps.check_secrets.outputs.configured == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy . --project-name=matrimony-site

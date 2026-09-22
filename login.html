@@ -132,6 +132,23 @@
         </p>
       </div>
 
+      <!-- Already Logged In Notice -->
+      <div id="alreadyLoggedInBanner" style="display: none; background: var(--surface-alt); border: 1px solid var(--surface-border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1.5rem; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <div style="width: 38px; height: 38px; border-radius: 50%; overflow: hidden; border: 2px solid var(--primary); flex-shrink: 0;">
+            <img id="loggedInAvatarImg" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&h=100&q=80" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+          </div>
+          <div>
+            <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);">Signed in as <span id="loggedInUserName">Priya Sharma</span></div>
+            <div style="font-size: 0.76rem; color: var(--success); font-weight: 600;">Active Session</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <a href="index.html" class="btn btn-primary btn-sm">Dashboard</a>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="logoutUser()">Log Out</button>
+        </div>
+      </div>
+
       <!-- Login Form -->
       <form id="authLoginForm" novalidate onsubmit="handleLoginSubmit(event)">
         
@@ -237,9 +254,33 @@
   </div>
 
   <!-- Reusable Components -->
+  <script src="js/data/candidates.js"></script>
   <script src="js/components/toast.js"></script>
+  <script src="js/components/navigation.js"></script>
   <script>
     let currentCaptcha = '';
+
+    // Check if already logged in and update status banner
+    function checkExistingLogin() {
+      const banner = document.getElementById('alreadyLoggedInBanner');
+      if (!banner) return;
+
+      if (isUserLoggedIn()) {
+        banner.style.display = 'flex';
+        let bio = null;
+        try {
+          const bioStr = localStorage.getItem('matrimony_user_biodata');
+          if (bioStr) bio = JSON.parse(bioStr);
+        } catch(e) {}
+        const nameEl = document.getElementById('loggedInUserName');
+        if (nameEl) nameEl.textContent = bio?.full_name || 'Priya Sharma';
+        const imgEl = document.getElementById('loggedInAvatarImg');
+        const photoUrl = localStorage.getItem('matrimony_user_photo_url') || bio?.photo_url;
+        if (imgEl && photoUrl) imgEl.src = photoUrl;
+      } else {
+        banner.style.display = 'none';
+      }
+    }
 
     // Dynamic Captcha Generator with Canvas Distortion
     function generateCaptcha() {
@@ -288,6 +329,11 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       generateCaptcha();
+      checkExistingLogin();
+
+      window.addEventListener('userAuthStateChanged', () => {
+        checkExistingLogin();
+      });
 
       document.getElementById('refreshCaptchaBtn').addEventListener('click', () => {
         generateCaptcha();
@@ -341,10 +387,16 @@
 
       if (hasError) return;
 
+      // Persist login state
+      setUserLoggedIn(true);
+      if (username) {
+        localStorage.setItem('matrimony_user_id', username);
+      }
+
       window.toast.show('Sign in successful! Redirecting to dashboard...', 'success');
       setTimeout(() => {
         window.location.href = 'index.html';
-      }, 1000);
+      }, 800);
     }
 
     function handleQuickSignup(e) {

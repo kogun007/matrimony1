@@ -18,16 +18,10 @@ A modern, full-stack Matrimony Platform built with reusable components, a persis
   - Live interactive Age & Height sliders with dynamic gradient tracks.
   - Candidate ID lookup and sub-caste dropdown.
   - Instant live filtering connected to the PostgreSQL API.
-- **👥 Daily Matches Hub**:
-  - Filter tabs (All Recommendations, Verified Only, Premium, >90% Match).
-  - Quick Sort by Compatibility Score, Age, Height, or Name.
-  - Interactive Bio modal & Express Interest micro-interactions.
+- **🕒 Recently Viewed Profiles**:
+  - Automatically records inspected candidate profiles with clear history action.
 - **👤 Member Profile & Preferences**:
   - Personal info, education, career, Kundali/astrology details, and partner preferences checklist with instant save.
-- **💬 Messages & Connections**:
-  - Received interests inbox and real-time chat interface.
-- **⭐ Shortlisted Profiles**:
-  - Client-synced bookmarks with empty state recovery.
 - **🔐 Secure Authentication**:
   - Dynamic canvas-generated captcha verification with anti-distortion noise and password reveal toggle.
 - **📋 Master Page Template (`template.html`)**:
@@ -41,10 +35,8 @@ A modern, full-stack Matrimony Platform built with reusable components, a persis
 Matrimony/
 ├── index.html               # Main Portal & Activity Dashboard
 ├── search.html              # Advanced Partner Search & Live Sliders
-├── matches.html             # Daily Recommendations Hub
+├── recently-viewed.html     # Recently Inspected Candidate Profiles
 ├── profile.html             # Member Profile & Kundali Preferences
-├── messages.html            # Connections & Chat Inbox
-├── shortlist.html           # Bookmarked Profiles
 ├── login.html               # Sign In with Dynamic Captcha
 ├── template.html            # Master Reusable Boilerplate
 ├── styles/
@@ -86,7 +78,7 @@ python3 -m http.server 8080
 *Open in your browser:*
 - **Home / Dashboard**: [http://localhost:8080/index.html](http://localhost:8080/index.html)
 - **Partner Search**: [http://localhost:8080/search.html](http://localhost:8080/search.html)
-- **Matches**: [http://localhost:8080/matches.html](http://localhost:8080/matches.html)
+- **Recently Viewed**: [http://localhost:8080/recently-viewed.html](http://localhost:8080/recently-viewed.html)
 
 ---
 
@@ -96,10 +88,20 @@ python3 -m http.server 8080
 | :--- | :--- | :--- |
 | `GET` | `/api/health` | Check PostgreSQL server health and candidate count |
 | `GET` | `/api/candidates` | Search & filter candidates by age, height, sub-caste, city |
-| `GET` | `/api/candidates/:id` | Fetch specific candidate profile by ID (e.g. `JAIN-1001`) |
+| `GET` | `/api/candidates/:id` | Fetch candidate profile by ID; enforces **dual limit: 75 views & 3 months validity from profile creation** & locks contact details once exceeded |
+| `GET` | `/api/user-quota` | Check current user's profile view count, 3-month profile validity status, and remaining days |
+| `POST` | `/api/user-quota/reset` | Reset user's profile view count & renew 3-month validity (demo/testing) |
+| `POST` | `/api/user-quota/simulate-limit` | Simulate reaching maximum 75 profile views (demo/testing) |
+| `POST` | `/api/user-quota/simulate-expiry` | Simulate 3-month profile validity expiration from creation date (demo/testing) |
 | `GET` | `/api/subcastes` | List Jain sub-castes and their counts |
 | `GET` | `/api/stats` | Summary metrics and top cities |
 | `POST` | `/api/candidates` | Register a new candidate profile into PostgreSQL |
+| `GET` | `/api/admin/candidates` | Admin search and filter candidate profiles with unredacted details |
+| `GET` | `/api/admin/candidates/:id` | Admin fetch single profile details by ID with viewer metrics |
+| `POST` | `/api/admin/candidates` | Admin create candidate profile with auto ID generation and validation |
+| `PUT` | `/api/admin/candidates/:id` | Admin update candidate profile attributes |
+| `DELETE` | `/api/admin/candidates/:id` | Admin delete candidate profile with cascade cleanup of profile views |
+| `GET` | `/api/admin/stats` | Admin metrics (gender ratio, verified count, total views, sub-caste counts) |
 
 ---
 

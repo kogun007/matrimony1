@@ -8,16 +8,31 @@ class ToastManager {
   }
 
   init() {
-    if (!document.querySelector('.toast-container')) {
-      this.container = document.createElement('div');
-      this.container.className = 'toast-container';
-      document.body.appendChild(this.container);
-    } else {
-      this.container = document.querySelector('.toast-container');
+    if (!this.container || !document.contains(this.container)) {
+      let el = document.querySelector('.toast-container');
+      if (!el) {
+        el = document.createElement('div');
+        el.className = 'toast-container';
+        if (document.body) {
+          document.body.appendChild(el);
+        } else {
+          document.addEventListener('DOMContentLoaded', () => {
+            if (!document.querySelector('.toast-container')) {
+              document.body.appendChild(el);
+            }
+          });
+        }
+      }
+      this.container = el;
     }
   }
 
-  show(message, type = 'info', duration = 3500) {
+  show(message, type = 'info', duration = 2500) {
+    this.init();
+    if (this.container && !this.container.parentNode && document.body) {
+      document.body.appendChild(this.container);
+    }
+
     const toast = document.createElement('div');
     toast.className = `toast-item toast-${type}`;
 
@@ -27,7 +42,7 @@ class ToastManager {
     } else if (type === 'error') {
       iconSvg = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
     } else {
-      iconSvg = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+      iconSvg = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
     }
 
     toast.innerHTML = `
@@ -35,7 +50,11 @@ class ToastManager {
       <span class="toast-text">${message}</span>
     `;
 
-    this.container.appendChild(toast);
+    if (this.container) {
+      this.container.appendChild(toast);
+    } else if (document.body) {
+      document.body.appendChild(toast);
+    }
 
     setTimeout(() => {
       toast.style.opacity = '0';

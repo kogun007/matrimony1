@@ -315,8 +315,8 @@ function getOppositeGenderCandidates(candidatesList) {
 
 // Async loader to fetch live data from PostgreSQL API filtered by opposite gender
 async function loadCandidatesFromApi(queryParams = {}) {
-  if (!isUserLoggedIn()) {
-    requireAuth();
+  if (!isUserLoggedIn() || isNewUserRestricted()) {
+    if (!isUserLoggedIn()) requireAuth();
     return [];
   }
   const userId = getCurrentUserId();
@@ -391,6 +391,12 @@ function isUserLoggedIn() {
   return status === 'true' && Boolean(userId && userId.trim() !== '' && userId.trim() !== 'user_guest_default' && userId.trim().toLowerCase() !== 'guest');
 }
 
+// Check if user is a restricted new user registered with email (only allowed to create profile)
+function isNewUserRestricted() {
+  if (!isUserLoggedIn()) return false;
+  return localStorage.getItem('matrimony_is_new_user') === 'true';
+}
+
 function requireAuth() {
   if (typeof window === 'undefined') return true;
   const path = window.location.pathname.toLowerCase();
@@ -403,6 +409,15 @@ function requireAuth() {
     const targetUrl = isSubdir ? '../login.html' : 'login.html';
     window.location.replace(targetUrl);
     return false;
+  }
+  // Restricted new user with email: only allow access to profile creation page
+  if (isNewUserRestricted()) {
+    if (!path.includes('profile')) {
+      const isSubdir = window.location.pathname.includes('/login_page/') || window.location.pathname.includes('/search_page/');
+      const targetUrl = isSubdir ? '../profile.html' : 'profile.html';
+      window.location.replace(targetUrl);
+      return false;
+    }
   }
   return true;
 }
@@ -421,6 +436,9 @@ function setUserLoggedIn(loggedIn) {
     localStorage.removeItem('matrimony_profile_is_active');
     localStorage.removeItem('matrimony_user_views_count');
     localStorage.removeItem('matrimony_viewed_candidate_ids');
+    localStorage.removeItem('matrimony_is_new_user');
+    localStorage.removeItem('matrimony_user_email');
+    localStorage.removeItem('matrimony_profile_completed');
   }
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('userAuthStateChanged', { detail: { isLoggedIn: loggedIn } }));
@@ -435,6 +453,9 @@ function logoutUser() {
   localStorage.removeItem('matrimony_viewed_candidate_ids');
   localStorage.removeItem('matrimony_user_biodata');
   localStorage.removeItem('matrimony_user_photo_url');
+  localStorage.removeItem('matrimony_is_new_user');
+  localStorage.removeItem('matrimony_user_email');
+  localStorage.removeItem('matrimony_profile_completed');
   if (typeof window !== 'undefined') {
     if (window.toast) {
       window.toast.show('You have logged out successfully. 👋', 'info');
@@ -458,8 +479,8 @@ function getCurrentUserId() {
 
 // Fetch single candidate profile with backend view-limit tracking (Max 75 profiles)
 async function fetchCandidateProfileFromApi(candidateId) {
-  if (!isUserLoggedIn()) {
-    requireAuth();
+  if (!isUserLoggedIn() || isNewUserRestricted()) {
+    if (!isUserLoggedIn()) requireAuth();
     return null;
   }
   const userId = getCurrentUserId();
@@ -755,7 +776,7 @@ function clearRecentlyViewed() {
 
 // Fetch recently viewed profiles directly from PostgreSQL backend
 async function fetchRecentlyViewedFromApi() {
-  if (!isUserLoggedIn()) return [];
+  if (!isUserLoggedIn() || isNewUserRestricted()) return [];
   const userId = getCurrentUserId();
   if (!userId) return [];
   try {

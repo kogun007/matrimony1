@@ -48,6 +48,7 @@ class MatrimonyNavigation {
     const prefix = isSubdir ? '../' : '';
 
     const loggedIn = (typeof isUserLoggedIn === 'function') ? isUserLoggedIn() : (localStorage.getItem('matrimony_is_logged_in') === 'true' && Boolean(localStorage.getItem('matrimony_user_id')));
+    const isNewUserRestricted = (typeof window !== 'undefined' && localStorage.getItem('matrimony_is_new_user') === 'true');
 
     // Retrieve custom user details if available
     let userBiodata = null;
@@ -56,9 +57,10 @@ class MatrimonyNavigation {
       if (bioStr) userBiodata = JSON.parse(bioStr);
     } catch(e) {}
 
-    const userName = userBiodata?.full_name || 'Priya Sharma';
+    const userEmail = localStorage.getItem('matrimony_user_email');
+    const userName = userBiodata?.full_name || (userEmail ? userEmail.split('@')[0] : 'New Member');
     const userPhoto = localStorage.getItem('matrimony_user_photo_url') || userBiodata?.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80';
-    const userId = localStorage.getItem('matrimony_user_id') || 'LPS-88421';
+    const userId = localStorage.getItem('matrimony_user_id') || userEmail || 'LPS-88421';
 
     const navItems = [
       {
@@ -68,12 +70,14 @@ class MatrimonyNavigation {
         id: 'dashboard',
         label: 'Dashboard',
         href: `${prefix}index.html`,
+        isLocked: isNewUserRestricted,
         icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`
       },
       {
         id: 'search',
         label: 'Partner Search',
         href: `${prefix}search.html`,
+        isLocked: isNewUserRestricted,
         icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`
       },
       {
@@ -83,7 +87,8 @@ class MatrimonyNavigation {
         id: 'recently-viewed',
         label: 'Recently Viewed',
         href: `${prefix}recently-viewed.html`,
-        badge: this.badgeCounts.recentlyViewed,
+        isLocked: isNewUserRestricted,
+        badge: isNewUserRestricted ? null : this.badgeCounts.recentlyViewed,
         icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`
       },
       {
@@ -119,6 +124,14 @@ class MatrimonyNavigation {
     navItems.forEach(item => {
       if (item.section) {
         navHtml += `<div class="nav-section-label">${item.section}</div>`;
+      } else if (item.isLocked) {
+        navHtml += `
+          <a href="javascript:void(0)" class="nav-item nav-item-locked" data-tooltip="${item.label} (Locked)" onclick="if(window.toast){window.toast.show('Access restricted: Please create your profile first. Other website features are disabled.', 'warning', 4000);} return false;" style="opacity: 0.45; cursor: not-allowed;">
+            <span class="nav-icon">${item.icon}</span>
+            <span class="nav-label">${item.label}</span>
+            <span class="nav-badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 9999px;">🔒 Locked</span>
+          </a>
+        `;
       } else {
         const isActive = this.activePage === item.id;
         const badgeHtml = item.badge ? `<span class="nav-badge">${item.badge}</span>` : '';
@@ -133,11 +146,13 @@ class MatrimonyNavigation {
       }
     });
 
+    const userStatusText = isNewUserRestricted ? 'New Member · Profile Setup Only' : 'Verified Member · Online';
+
     sidebarMount.innerHTML = `
       <aside class="app-sidebar" id="appSidebar">
         <!-- Brand Header with Collapse Toggle -->
         <div class="sidebar-header">
-          <a href="${prefix}index.html" class="sidebar-brand" aria-label="Matrimony Home">
+          <a href="${isNewUserRestricted ? `${prefix}profile.html` : `${prefix}index.html`}" class="sidebar-brand" aria-label="Matrimony Home">
             <div class="brand-icon-wrapper">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="url(#brand-grad-icon)" stroke="none"/>
@@ -174,7 +189,7 @@ class MatrimonyNavigation {
               </div>
               <div class="user-details">
                 <div class="user-name" style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${userName}</div>
-                <div class="user-status">Verified Member · Online</div>
+                <div class="user-status">${userStatusText}</div>
               </div>
             </a>
             <button type="button" class="btn-sidebar-logout" onclick="logoutUser()" title="Log Out" aria-label="Log Out" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0.45rem; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; transition: all var(--transition-fast);">
@@ -189,22 +204,22 @@ class MatrimonyNavigation {
 
       <!-- Native-Style Mobile Bottom Navigation Bar -->
       <nav class="mobile-bottom-nav" aria-label="Mobile Navigation">
-        <a href="${prefix}index.html" class="mobile-nav-tab ${this.activePage === 'dashboard' ? 'active' : ''}">
+        <a href="${isNewUserRestricted ? 'javascript:void(0)' : `${prefix}index.html`}" class="mobile-nav-tab ${this.activePage === 'dashboard' ? 'active' : ''}" ${isNewUserRestricted ? 'onclick="if(window.toast){window.toast.show(\'Access restricted: Please create your profile first.\', \'warning\');} return false;" style="opacity: 0.45;"' : ''}>
           <span class="mobile-nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect></svg>
           </span>
           <span class="mobile-nav-label">Home</span>
         </a>
-        <a href="${prefix}search.html" class="mobile-nav-tab ${this.activePage === 'search' ? 'active' : ''}">
+        <a href="${isNewUserRestricted ? 'javascript:void(0)' : `${prefix}search.html`}" class="mobile-nav-tab ${this.activePage === 'search' ? 'active' : ''}" ${isNewUserRestricted ? 'onclick="if(window.toast){window.toast.show(\'Access restricted: Please create your profile first.\', \'warning\');} return false;" style="opacity: 0.45;"' : ''}>
           <span class="mobile-nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           </span>
           <span class="mobile-nav-label">Search</span>
         </a>
-        <a href="${prefix}recently-viewed.html" class="mobile-nav-tab ${this.activePage === 'recently-viewed' ? 'active' : ''}">
+        <a href="${isNewUserRestricted ? 'javascript:void(0)' : `${prefix}recently-viewed.html`}" class="mobile-nav-tab ${this.activePage === 'recently-viewed' ? 'active' : ''}" ${isNewUserRestricted ? 'onclick="if(window.toast){window.toast.show(\'Access restricted: Please create your profile first.\', \'warning\');} return false;" style="opacity: 0.45;"' : ''}>
           <span class="mobile-nav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-            ${this.badgeCounts.recentlyViewed ? `<span class="mobile-nav-badge-dot"></span>` : ''}
+            ${(!isNewUserRestricted && this.badgeCounts.recentlyViewed) ? `<span class="mobile-nav-badge-dot"></span>` : ''}
           </span>
           <span class="mobile-nav-label">Recents</span>
         </a>
@@ -277,6 +292,19 @@ class MatrimonyNavigation {
         link.onclick = null;
       }
     });
+
+    if (localStorage.getItem('matrimony_is_new_user') === 'true') {
+      document.querySelectorAll('.footer-links a').forEach(link => {
+        if (!link.classList.contains('footer-auth-link') && !link.getAttribute('href')?.includes('profile.html')) {
+          link.onclick = (e) => {
+            e.preventDefault();
+            if (window.toast) window.toast.show('Access restricted: Please create your profile first. Other website features are disabled.', 'warning');
+          };
+          link.style.opacity = '0.5';
+          link.style.cursor = 'not-allowed';
+        }
+      });
+    }
   }
 
   toggleCollapse() {

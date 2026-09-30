@@ -38,6 +38,24 @@ function getUserId(req) {
   return null;
 }
 
+// Middleware to ensure new email users create their profile before accessing candidate directories
+async function requireProfileCreation(req, res, next) {
+  const userId = getUserId(req);
+  if (userId && userId.includes('@')) {
+    try {
+      const bioRes = await query('SELECT 1 FROM user_biodata WHERE user_id = $1', [userId]);
+      if (bioRes.rows.length === 0) {
+        return res.status(403).json({
+          success: false,
+          error: 'Profile creation required. New email users must create their profile first.',
+          code: 'PROFILE_REQUIRED'
+        });
+      }
+    } catch (e) {}
+  }
+  next();
+}
+
 // Helper to retrieve or initialize user profile account with creation date, 3-month expiration, and activation status
 async function getUserProfileAccount(userId) {
   let res = await query('SELECT * FROM user_accounts WHERE user_id = $1', [userId]);
@@ -147,7 +165,7 @@ app.get('/api/health', async (req, res) => {
 
 // 2. Fetch Candidates with Dynamic PostgreSQL Filtering
 // Supports: id, query (name/id), age_max, age_min, height_min, height_max, sub_caste, city, marital_status, gender, verified_only, premium_only, sort
-app.get('/api/candidates', requireUserAuth, async (req, res) => {
+app.get('/api/candidates', requireUserAuth, requireProfileCreation, async (req, res) => {
   try {
     const {
       id,
@@ -293,7 +311,7 @@ app.get('/api/candidates', requireUserAuth, async (req, res) => {
 });
 
 // 3. Fetch Single Candidate by ID (Enforces 75 Profile View Limit & Contact Detail Protection)
-app.get('/api/candidates/:id', requireUserAuth, async (req, res) => {
+app.get('/api/candidates/:id', requireUserAuth, requireProfileCreation, async (req, res) => {
   try {
     const { id } = req.params;
     const userId = getUserId(req);
@@ -480,7 +498,7 @@ app.post('/api/user-quota/simulate-expiry', requireUserAuth, async (req, res) =>
 });
 
 // 3e. Fetch Recently Viewed Candidate Profiles for the Current User
-app.get('/api/recently-viewed', requireUserAuth, async (req, res) => {
+app.get('/api/recently-viewed', requireUserAuth, requireProfileCreation, async (req, res) => {
   try {
     const userId = getUserId(req);
     const sql = `

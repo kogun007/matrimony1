@@ -54,6 +54,22 @@
       <!-- Page Content -->
       <main class="content-container">
         
+        <!-- Restricted New User Profile Notice -->
+        <div class="card" id="newUserProfileNotice" style="display: none; background: linear-gradient(135deg, rgba(99,102,241,0.06) 0%, rgba(236,72,153,0.06) 100%); border: 1.5px solid rgba(99,102,241,0.25); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm);">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+            <div style="display: flex; align-items: flex-start; gap: 1rem;">
+              <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              </div>
+              <div>
+                <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.3rem; color: var(--text-main);">Welcome! Please Create Your Matrimony Profile</h3>
+                <p style="font-size: 0.86rem; color: var(--text-muted); margin: 0; line-height: 1.5;">Your email registration is active. Complete your personal details, horoscope, lifestyle, and partner preferences below and upload your profile photo to create your profile. <strong>Notice:</strong> All other website features are disabled for your account.</p>
+              </div>
+            </div>
+            <span style="font-size: 0.78rem; font-weight: 700; background: rgba(99,102,241,0.12); color: var(--primary); padding: 0.35rem 0.85rem; border-radius: 9999px; border: 1px solid rgba(99,102,241,0.2);">Profile Creation Mode</span>
+          </div>
+        </div>
+
         <!-- Profile Banner Card -->
         <div class="card profile-hero-card">
           <div class="profile-hero-cover">
@@ -419,9 +435,35 @@
     }
 
     async function loadProfileBiodata() {
+      const isNewUser = localStorage.getItem('matrimony_is_new_user') === 'true';
+      const userEmail = localStorage.getItem('matrimony_user_email');
+      const noticeBanner = document.getElementById('newUserProfileNotice');
+      if (noticeBanner) {
+        noticeBanner.style.display = isNewUser ? 'block' : 'none';
+      }
+
+      if (isNewUser) {
+        const saveBtnText = document.querySelector('.save-btn-text');
+        if (saveBtnText) saveBtnText.textContent = 'Create Profile';
+      }
+
       try {
         const biodata = await fetchUserBiodataFromApi();
-        if (!biodata) return;
+        if (!biodata) {
+          if (isNewUser && userEmail) {
+            const nameEl = document.getElementById('profileDisplayName');
+            if (nameEl) nameEl.textContent = userEmail.split('@')[0];
+            const idEl = document.getElementById('profileDisplayId');
+            if (idEl) idEl.textContent = `Email: ${userEmail}`;
+            const topbarBadge = document.querySelector('.topbar-badge');
+            if (topbarBadge) topbarBadge.textContent = 'Profile Setup Required';
+            const heroBadge = document.querySelector('.profile-hero-badge span');
+            if (heroBadge) heroBadge.textContent = 'New Candidate';
+            const nameInput = document.getElementById('prof-fullname');
+            if (nameInput && !nameInput.value) nameInput.value = userEmail.split('@')[0];
+          }
+          return;
+        }
 
         const setVal = (id, val) => {
           const el = document.getElementById(id);
@@ -601,11 +643,16 @@
       try {
         const res = await saveUserBiodataToApi(biodata);
         if (res && res.success) {
+          localStorage.setItem('matrimony_profile_completed', 'true');
           // Persist gender and update UI only after save button succeeds
           setUserGender(selectedGender);
           updateProfileGenderDisplay();
           updateHeaderCardDisplays(biodata);
-          window.toast.show('🎉 All changes and photo saved successfully in database!', 'success');
+          const saveBtnText = document.querySelector('.save-btn-text');
+          if (saveBtnText) saveBtnText.textContent = 'Save Changes';
+          const topbarBadge = document.querySelector('.topbar-badge');
+          if (topbarBadge) topbarBadge.textContent = 'Profile Created';
+          window.toast.show('🎉 Profile created and saved successfully in database!', 'success');
         } else {
           window.toast.show(res?.message || 'Error saving changes to database', 'warning');
         }

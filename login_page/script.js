@@ -238,12 +238,21 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('matrimony_is_logged_in', 'true');
         localStorage.setItem('matrimony_user_id', usernameVal);
 
+        const isEmailUser = usernameVal.includes('@');
+        if (isEmailUser) {
+          localStorage.setItem('matrimony_user_email', usernameVal);
+          localStorage.setItem('matrimony_is_new_user', 'true');
+          localStorage.setItem('matrimony_profile_completed', 'false');
+        } else {
+          localStorage.removeItem('matrimony_is_new_user');
+        }
+
         // Refresh captcha for subsequent attempts
         drawCaptcha();
         captchaInput.value = '';
 
         setTimeout(() => {
-          window.location.href = '../index.html';
+          window.location.href = isEmailUser ? '../profile.html' : '../index.html';
         }, 1200);
       }, 1000);
     }
@@ -276,17 +285,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     clearFieldError(signupEmailInput, 'signupEmailError');
 
-    // Simulate Sign Up Invitation Request
+    // Sign Up Registration
     const signupBtn = document.getElementById('signupBtn');
     const originalText = signupBtn.innerHTML;
     signupBtn.disabled = true;
-    signupBtn.innerHTML = '<span>Submitting...</span>';
+    signupBtn.innerHTML = '<span>Registering...</span>';
 
     setTimeout(() => {
       signupBtn.disabled = false;
       signupBtn.innerHTML = originalText;
       signupEmailInput.value = '';
-      showToast(`Registration invite sent to ${emailVal}! Check your inbox.`, 'success', 5000);
+
+      localStorage.setItem('matrimony_is_logged_in', 'true');
+      localStorage.setItem('matrimony_user_id', emailVal);
+      localStorage.setItem('matrimony_user_email', emailVal);
+      localStorage.setItem('matrimony_is_new_user', 'true');
+      localStorage.setItem('matrimony_profile_completed', 'false');
+
+      showToast(`Account registered for ${emailVal}! Redirecting to create your profile...`, 'success', 4000);
+
+      setTimeout(() => {
+        window.location.href = '../profile.html';
+      }, 1200);
     }, 800);
   });
 });

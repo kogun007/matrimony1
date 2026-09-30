@@ -298,6 +298,10 @@ app.get('/api/candidates/:id', async (req, res) => {
     candidate.height = parseFloat(candidate.height);
     candidate.interests = typeof candidate.interests === 'string' ? JSON.parse(candidate.interests || '[]') : candidate.interests;
 
+    // Fetch account details to check if user is verified by admin
+    const account = await getUserProfileAccount(userId);
+    const isProfileActive = Boolean(account.is_active);
+
     // Check if user already viewed this profile previously
     const existingViewRes = await query(
       'SELECT id FROM profile_views WHERE user_id = $1 AND LOWER(candidate_id) = LOWER($2)',
@@ -305,18 +309,21 @@ app.get('/api/candidates/:id', async (req, res) => {
     );
     const isRepeatView = existingViewRes.rows.length > 0;
 
-    if (!isRepeatView) {
-      // Only insert new view record for new/unique profiles
-      await query(
-        'INSERT INTO profile_views (user_id, candidate_id) VALUES ($1, $2) ON CONFLICT (user_id, candidate_id) DO NOTHING',
-        [userId, candidate.id]
-      );
-    } else {
-      // Update timestamp for recently viewed sorting without incrementing count
-      await query(
-        'UPDATE profile_views SET viewed_at = CURRENT_TIMESTAMP WHERE user_id = $1 AND LOWER(candidate_id) = LOWER($2)',
-        [userId, candidate.id]
-      );
+    // Only record profile view count if the user is verified by admin
+    if (isProfileActive) {
+      if (!isRepeatView) {
+        // Only insert new view record for new/unique profiles
+        await query(
+          'INSERT INTO profile_views (user_id, candidate_id) VALUES ($1, $2) ON CONFLICT (user_id, candidate_id) DO NOTHING',
+          [userId, candidate.id]
+        );
+      } else {
+        // Update timestamp for recently viewed sorting without incrementing count
+        await query(
+          'UPDATE profile_views SET viewed_at = CURRENT_TIMESTAMP WHERE user_id = $1 AND LOWER(candidate_id) = LOWER($2)',
+          [userId, candidate.id]
+        );
+      }
     }
 
     // Fetch comprehensive quota & validity details (75 views + 3 months from creation date)

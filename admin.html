@@ -1591,26 +1591,24 @@
     // Activate a user profile by Admin
     async function handleActivateUser(userId) {
       try {
-        if (window.toast) window.toast.show(`Activating profile ${userId}...`, 'info');
         const res = await activateAdminUser(userId);
-        if (window.toast) window.toast.show(`🎉 User '${userId}' activated! They can now view candidate contact details.`, 'success');
+        if (window.toast) window.toast.show(`🎉 Member '<strong>${userId}</strong>' verified & activated! Profile viewed count & contacts unlocked.`, 'success', 3500);
         loadAdminUsersList();
         loadAdminStats();
       } catch (err) {
-        if (window.toast) window.toast.show(`Activation failed: ${err.message}`, 'error');
+        if (window.toast) window.toast.show(`Activation failed: ${err.message}`, 'error', 3500);
       }
     }
 
     // Deactivate a user profile by Admin
     async function handleDeactivateUser(userId) {
       try {
-        if (window.toast) window.toast.show(`Deactivating profile ${userId}...`, 'info');
         const res = await deactivateAdminUser(userId);
-        if (window.toast) window.toast.show(`🚫 User '${userId}' deactivated. Candidate contact details are now locked for them.`, 'warning');
+        if (window.toast) window.toast.show(`🚫 Member '<strong>${userId}</strong>' set to Pending Verification. Profile viewed count & contacts locked.`, 'warning', 3500);
         loadAdminUsersList();
         loadAdminStats();
       } catch (err) {
-        if (window.toast) window.toast.show(`Deactivation failed: ${err.message}`, 'error');
+        if (window.toast) window.toast.show(`Deactivation failed: ${err.message}`, 'error', 3500);
       }
     }
   </script>

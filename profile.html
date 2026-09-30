@@ -485,7 +485,7 @@
                 }
               }
               if (viewsEl) {
-                viewsEl.textContent = `${quota.used} / ${quota.limit} Used`;
+                viewsEl.textContent = quota.is_active ? `${quota.used} / ${quota.limit} Used` : 'Pending Admin Verification';
               }
               const actEl = document.getElementById('profActivationBadge');
               if (actEl) {

@@ -61,6 +61,7 @@ Matrimony/
 ---
 
 ## 🚀 Quick Start
+*Prerequisite: Node.js 22 (LTS) or higher*
 
 ### 1. Start the PostgreSQL REST API Server
 ```bash

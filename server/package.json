@@ -2,6 +2,9 @@
   "name": "server",
   "version": "1.0.0",
   "main": "index.js",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "start": "node server.js",
     "test": "node --check server.js && node --check db.js"

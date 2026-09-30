@@ -334,6 +334,11 @@
         });
       }
 
+      // Sync user quota & admin verification status
+      if (typeof fetchUserQuota === 'function') {
+        fetchUserQuota();
+      }
+
       // Initial render after loading API data
       if (typeof loadCandidatesFromApi === 'function') {
         loadCandidatesFromApi().then(() => filterCandidates());

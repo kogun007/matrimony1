@@ -281,7 +281,7 @@
         fetchUserQuota().then(quota => {
           if (quota && quota.success) {
             const el = document.getElementById('stat-profile-views');
-            if (el) el.textContent = `${quota.used} / ${quota.limit}`;
+            if (el) el.textContent = quota.is_active ? `${quota.used} / ${quota.limit}` : 'Pending Verification';
             const valEl = document.getElementById('stat-validity-info');
             if (valEl) {
               if (quota.is_time_expired) {

@@ -210,11 +210,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const captchaVal = captchaInput.value.trim().toUpperCase();
     if (!captchaVal) {
       setFieldError(captchaInput, 'captchaError', 'Please enter the captcha code.');
+      showToast('Please enter the security verification code.', 'error');
       isValid = false;
     } else if (captchaVal !== currentCaptchaCode) {
       setFieldError(captchaInput, 'captchaError', 'Incorrect captcha code. Try again.');
       drawCaptcha(); // Generate fresh captcha on failure
       captchaInput.value = '';
+      showToast('Security verification failed: Incorrect captcha code.', 'error');
       isValid = false;
     } else {
       clearFieldError(captchaInput, 'captchaError');

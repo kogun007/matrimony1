@@ -378,9 +378,11 @@
 
       if (!captcha) {
         document.getElementById('captchaError').textContent = 'Please enter the verification code';
+        if (window.toast) window.toast.show('Please enter the security verification code.', 'warning', 3000);
         hasError = true;
       } else if (captcha !== currentCaptcha) {
         document.getElementById('captchaError').textContent = 'Incorrect verification code. Please try again.';
+        if (window.toast) window.toast.show('Security verification failed: Incorrect captcha code.', 'error', 3000);
         generateCaptcha();
         hasError = true;
       }
@@ -393,10 +395,12 @@
         localStorage.setItem('matrimony_user_id', username);
       }
 
-      window.toast.show('Sign in successful! Redirecting to dashboard...', 'success');
+      if (window.toast) {
+        window.toast.show(`Authentication verified! Welcome back, <strong>${username}</strong>. Redirecting...`, 'success', 2000);
+      }
       setTimeout(() => {
         window.location.href = 'index.html';
-      }, 800);
+      }, 1000);
     }
 
     function handleQuickSignup(e) {

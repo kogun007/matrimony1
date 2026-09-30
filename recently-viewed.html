@@ -114,6 +114,9 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       new MatrimonyNavigation({ activePage: 'recently-viewed' });
+      if (typeof fetchUserQuota === 'function') {
+        fetchUserQuota();
+      }
       loadAndRenderRecentProfiles();
     });
 

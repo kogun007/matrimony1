@@ -100,6 +100,8 @@ function getViewedCandidateIds() {
 }
 
 function markCandidateViewed(id) {
+  const isVerified = localStorage.getItem('matrimony_profile_is_active') === 'true';
+  if (!isVerified) return false;
   const ids = getViewedCandidateIds();
   const normalizedId = String(id).toUpperCase();
   if (!ids.includes(normalizedId)) {
@@ -115,6 +117,8 @@ function markCandidateViewed(id) {
     addRecentlyViewed(candidateId);
   }
 
+  const isInitiallyVerified = localStorage.getItem('matrimony_profile_is_active') === 'true';
+
   // Check if profile was already viewed
   const isFirstView = markCandidateViewed(candidateId);
   const viewedIds = getViewedCandidateIds();
@@ -127,46 +131,153 @@ function markCandidateViewed(id) {
       const parts = (statCountEl.textContent || '').split('/');
       lastKnownViews = parseInt(parts[0].trim(), 10) || 0;
     } else {
-      lastKnownViews = viewedIds.length;
+      lastKnownViews = isInitiallyVerified ? viewedIds.length : 0;
     }
   }
 
-  // Only increment if this is a first-time view for this candidate
-  const currentViewed = isFirstView ? (lastKnownViews + 1) : lastKnownViews;
+  // Only increment local count if this user is verified by admin and this is a first-time view
+  const currentViewed = (isInitiallyVerified && isFirstView) ? (lastKnownViews + 1) : lastKnownViews;
   const currentLimit = 75;
   const currentRemaining = Math.max(0, currentLimit - currentViewed);
-  localStorage.setItem('matrimony_user_views_count', String(currentViewed));
+  if (isInitiallyVerified) {
+    localStorage.setItem('matrimony_user_views_count', String(currentViewed));
+  }
 
   // Update on-page counter if present
   if (statCountEl) {
-    statCountEl.textContent = `${Math.min(currentViewed, currentLimit)} / ${currentLimit}`;
+    statCountEl.textContent = isInitiallyVerified ? `${Math.min(currentViewed, currentLimit)} / ${currentLimit}` : 'Pending Admin Verification';
   }
 
-  // Display toast notification
-  if (window.toast) {
-    const isLimit = currentRemaining === 0;
-    let toastMsg = '';
-    if (isLimit) {
-      toastMsg = `⚠️ Profile view limit reached: <strong>${currentViewed} of ${currentLimit}</strong> viewed (0 remaining)`;
+  // Helper to show offline/local fallback toast
+  function showOfflineToast() {
+    if (!window.toast) return;
+    const isProfileActive = localStorage.getItem('matrimony_profile_is_active') === 'true';
+    const isExpired = localStorage.getItem('matrimony_profile_is_expired') === 'true';
+
+    // Profile viewed count is displayed ONLY to verified user by admin
+    if (!isProfileActive) {
+      window.toast.show(
+        `⏳ <strong>Profile Pending Admin Verification</strong> · Profile viewed count & candidate contacts unlock once verified by Admin.`,
+        'warning',
+        3500
+      );
+    } else if (isExpired && currentRemaining === 0) {
+      window.toast.show(
+        `⚠️ <strong>Limits Reached</strong>: Profile viewed count: <strong>${currentViewed} of ${currentLimit}</strong> & 3-month profile validity expired. Contacts locked.`,
+        'error',
+        3500
+      );
+    } else if (isExpired) {
+      window.toast.show(
+        `⚠️ <strong>3-Month Validity Expired</strong> · Profile viewed count: <strong>${currentViewed} of ${currentLimit}</strong>. Contacts locked.`,
+        'warning',
+        3500
+      );
+    } else if (currentRemaining === 0) {
+      window.toast.show(
+        `⚠️ <strong>Profile view limit reached</strong>: <strong>${currentViewed} of ${currentLimit}</strong> viewed (0 remaining)`,
+        'error',
+        3000
+      );
     } else if (isFirstView) {
-      toastMsg = `👁️ <strong>${currentViewed}</strong> profiles viewed · <strong>${currentRemaining}</strong> remaining (out of ${currentLimit})`;
+      window.toast.show(
+        `✅ <strong>Verified Member Access</strong> · Profile viewed count: <strong>${currentViewed} of ${currentLimit}</strong> (<strong>${currentRemaining}</strong> remaining)`,
+        'success',
+        2500
+      );
     } else {
-      toastMsg = `👁️ Profile already viewed · <strong>${currentViewed} of ${currentLimit}</strong> used (<strong>${currentRemaining}</strong> remaining)`;
+      window.toast.show(
+        `👁️ <strong>Verified Member</strong> · Profile already viewed · Total viewed: <strong>${currentViewed} of ${currentLimit}</strong> (<strong>${currentRemaining}</strong> remaining)`,
+        'info',
+        2500
+      );
     }
-    window.toast.show(toastMsg, isLimit ? 'error' : 'info', 2500);
   }
 
-  // Asynchronously query backend API to register view in PostgreSQL and fetch protected contact details
+  // Query backend API to register view in PostgreSQL, verify user status & fetch protected contact details
   if (typeof fetchCandidateProfileFromApi === 'function') {
-    const apiResult = await fetchCandidateProfileFromApi(candidateId);
-    if (apiResult && apiResult.quota) {
-      const actualUsed = apiResult.quota.used !== undefined ? apiResult.quota.used : apiResult.quota.total_views;
-      localStorage.setItem('matrimony_user_views_count', String(actualUsed));
-      if (statCountEl) {
-        statCountEl.textContent = `${apiResult.quota.used} / ${apiResult.quota.limit}`;
+    try {
+      const apiResult = await fetchCandidateProfileFromApi(candidateId);
+      if (apiResult && apiResult.quota) {
+        const quota = apiResult.quota;
+        const actualUsed = quota.used !== undefined ? quota.used : quota.total_views;
+        const actualLimit = quota.limit || 75;
+        const actualRemaining = quota.remaining !== undefined ? quota.remaining : Math.max(0, actualLimit - actualUsed);
+        // Explicitly check boolean flag from backend
+        const isProfileActive = Boolean(quota.is_active);
+        const isExpired = Boolean(quota.is_time_expired);
+        const isViewLimit = Boolean(quota.is_view_limit_reached) || actualRemaining === 0;
+
+        localStorage.setItem('matrimony_user_views_count', String(actualUsed));
+        localStorage.setItem('matrimony_profile_is_active', String(isProfileActive));
+        if (quota.profile_created_at) localStorage.setItem('matrimony_profile_created_at', quota.profile_created_at);
+        if (quota.expires_at) localStorage.setItem('matrimony_profile_expires_at', quota.expires_at);
+        localStorage.setItem('matrimony_profile_days_remaining', String(quota.days_remaining !== undefined ? quota.days_remaining : 90));
+        localStorage.setItem('matrimony_profile_is_expired', String(isExpired));
+
+        if (statCountEl) {
+          statCountEl.textContent = isProfileActive ? `${Math.min(actualUsed, actualLimit)} / ${actualLimit}` : 'Pending Admin Verification';
+        }
+
+        // Display synchronized toast notification:
+        // Profile viewed count is displayed ONLY to verified user by admin
+        if (window.toast) {
+          if (!isProfileActive) {
+            // UNVERIFIED USER: Do NOT display profile viewed count
+            window.toast.show(
+              `⏳ <strong>Profile Pending Admin Verification</strong> · Profile viewed count & candidate contacts unlock once verified by Admin.`,
+              'warning',
+              3500
+            );
+          } else if (isExpired && isViewLimit) {
+            // VERIFIED USER: Limits reached
+            window.toast.show(
+              `⚠️ <strong>Limits Reached</strong>: Profile viewed count: <strong>${actualUsed} of ${actualLimit}</strong> & 3-month profile validity expired. Contacts locked.`,
+              'error',
+              3500
+            );
+          } else if (isExpired) {
+            // VERIFIED USER: Time expired
+            window.toast.show(
+              `⚠️ <strong>3-Month Validity Expired</strong> · Profile viewed count: <strong>${actualUsed} of ${actualLimit}</strong>. Contacts locked.`,
+              'warning',
+              3500
+            );
+          } else if (isViewLimit) {
+            // VERIFIED USER: View limit reached
+            window.toast.show(
+              `⚠️ <strong>Profile view limit reached</strong>: <strong>${actualUsed} of ${actualLimit}</strong> viewed (0 remaining)`,
+              'error',
+              3000
+            );
+          } else if (quota.is_repeat_view) {
+            // VERIFIED USER: Repeat view
+            window.toast.show(
+              `👁️ <strong>Verified Member</strong> · Profile already viewed · Total viewed: <strong>${actualUsed} of ${actualLimit}</strong> (<strong>${actualRemaining}</strong> remaining)`,
+              'info',
+              2500
+            );
+          } else {
+            // VERIFIED USER: First-time view
+            window.toast.show(
+              `✅ <strong>Verified Member Access</strong> · Profile viewed count: <strong>${actualUsed} of ${actualLimit}</strong> (<strong>${actualRemaining}</strong> remaining)`,
+              'success',
+              2500
+            );
+          }
+        }
+      } else {
+        showOfflineToast();
       }
+      renderModalContactSection(candidateId, apiResult);
+    } catch (err) {
+      console.warn('Error fetching candidate detail:', err);
+      showOfflineToast();
+      renderModalContactSection(candidateId, null);
     }
-    renderModalContactSection(candidateId, apiResult);
+  } else {
+    showOfflineToast();
+    renderModalContactSection(candidateId, null);
   }
 }
 
@@ -285,10 +396,17 @@ function renderModalContactSection(candidateId, apiResult) {
 
         <div class="contact-locked-actions" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem;">
           ${!isProfileActive ? `
-            <button type="button" class="btn btn-sm btn-primary" onclick="if(window.toast) window.toast.show('Priority verification request sent to helpdesk.', 'success');">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-              <span>Request Priority Verification</span>
-            </button>
+            ${(typeof getCurrentUserId === 'function' && localStorage.getItem('matrimony_verification_req_' + getCurrentUserId()) === 'true') ? `
+              <button type="button" class="btn btn-sm btn-secondary" disabled style="opacity: 0.85; cursor: default; display: inline-flex; align-items: center; gap: 0.4rem;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span>Priority Verification Requested</span>
+              </button>
+            ` : `
+              <button type="button" class="btn btn-sm btn-primary" onclick="handleRequestPriorityVerification(this)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                <span>Request Priority Verification</span>
+              </button>
+            `}
             <a href="profile.html" class="btn btn-sm btn-secondary" style="text-decoration: none; font-size: 0.8rem; display: inline-flex; align-items: center;">
               <span>Complete Profile Details</span>
             </a>
@@ -306,11 +424,41 @@ function renderModalContactSection(candidateId, apiResult) {
   }
 }
 
+// Request priority admin verification for current user
+function handleRequestPriorityVerification(btn) {
+  const userId = (typeof getCurrentUserId === 'function') ? getCurrentUserId() : 'User';
+  localStorage.setItem('matrimony_verification_req_' + userId, 'true');
+  if (btn) {
+    btn.disabled = true;
+    btn.className = 'btn btn-sm btn-secondary';
+    btn.style.opacity = '0.85';
+    btn.style.cursor = 'default';
+    btn.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      <span>Priority Verification Requested</span>
+    `;
+  }
+  if (window.toast) {
+    window.toast.show(
+      `📩 Priority verification requested for user <strong>${userId}</strong>. Verification desk has been notified.`,
+      'success',
+      3500
+    );
+  }
+}
+
 // Quick handler to toggle user activation status
 async function handleQuickToggleActive(candidateId) {
   if (typeof toggleUserActivation === 'function') {
     const res = await toggleUserActivation();
-    if (window.toast) window.toast.show(res?.message || 'Profile activation updated!', 'info');
+    const isNowActive = res && res.is_active;
+    if (window.toast) {
+      if (isNowActive) {
+        window.toast.show('🎉 <strong>Profile Verified & Activated by Admin!</strong> Profile viewed count & contacts unlocked.', 'success', 3000);
+      } else {
+        window.toast.show('⏳ <strong>Profile Set to Pending Verification</strong>. Profile viewed count & contacts locked.', 'warning', 3000);
+      }
+    }
     if (typeof fetchCandidateProfileFromApi === 'function') {
       const apiResult = await fetchCandidateProfileFromApi(candidateId);
       renderModalContactSection(candidateId, apiResult);

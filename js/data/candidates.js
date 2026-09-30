@@ -316,7 +316,8 @@ function getOppositeGenderCandidates(candidatesList) {
 // Async loader to fetch live data from PostgreSQL API filtered by opposite gender
 async function loadCandidatesFromApi(queryParams = {}) {
   try {
-    const url = new URL(`${API_BASE_URL}/candidates`);
+    const base = (typeof window !== 'undefined' && window.location.origin) ? window.location.origin : 'http://localhost:3000';
+    const url = new URL(`${API_BASE_URL}/candidates`, base);
     // Enforce opposite gender filtering by default
     if (!queryParams.gender) {
       queryParams.gender = getOppositeGender();

@@ -1,5 +1,7 @@
 # 💍 LivePartner Matrimony Platform
 
+> 🚀 **Live Website on GitHub Pages**: [https://kogun007.github.io/matrimony1/](https://kogun007.github.io/matrimony1/)
+
 A modern, full-stack Matrimony Platform built with reusable components, a persistent collapsible navigation system, PostgreSQL database engine, and REST API seeded with authentic Indian profiles (Jain caste & sub-castes).
 
 ---

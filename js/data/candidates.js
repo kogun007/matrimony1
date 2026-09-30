@@ -517,6 +517,12 @@ async function fetchUserQuota() {
       localStorage.setItem('matrimony_profile_days_remaining', String(json.days_remaining !== undefined ? json.days_remaining : 90));
       localStorage.setItem('matrimony_profile_is_expired', String(Boolean(json.is_time_expired)));
       localStorage.setItem('matrimony_profile_is_active', String(Boolean(json.is_active)));
+      if (json.is_active === true) {
+        localStorage.removeItem('matrimony_is_new_user');
+        localStorage.setItem('matrimony_approval_status', 'approved');
+      } else if (json.approval_status) {
+        localStorage.setItem('matrimony_approval_status', json.approval_status);
+      }
     }
     return json;
   } catch (err) {
@@ -653,6 +659,51 @@ async function saveUserBiodataToApi(biodata) {
     return {
       success: true,
       data: biodata,
+      is_offline: true
+    };
+  }
+}
+
+// Submit User Profile for Admin Approval
+async function submitProfileForApproval(biodata) {
+  const userId = getCurrentUserId();
+  try {
+    const res = await fetch(`${API_BASE_URL}/profile/submit-approval`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': userId
+      },
+      body: JSON.stringify({
+        ...biodata,
+        user_id: userId
+      })
+    });
+    const json = await res.json();
+    if (json && json.success) {
+      localStorage.setItem('matrimony_user_biodata', JSON.stringify(biodata));
+      localStorage.setItem('matrimony_approval_status', 'pending');
+      localStorage.setItem('matrimony_profile_completed', 'true');
+      localStorage.setItem('matrimony_profile_is_active', 'false');
+      if (biodata.gender) {
+        setUserGender(biodata.gender);
+      }
+    }
+    return json;
+  } catch (err) {
+    console.warn('API submit-approval fallback to offline store:', err.message);
+    localStorage.setItem('matrimony_user_biodata', JSON.stringify(biodata));
+    localStorage.setItem('matrimony_approval_status', 'pending');
+    localStorage.setItem('matrimony_profile_completed', 'true');
+    localStorage.setItem('matrimony_profile_is_active', 'false');
+    if (biodata.gender) {
+      setUserGender(biodata.gender);
+    }
+    return {
+      success: true,
+      message: 'Profile submitted successfully and forwarded to admin for approval.',
+      approval_status: 'pending',
+      is_active: false,
       is_offline: true
     };
   }

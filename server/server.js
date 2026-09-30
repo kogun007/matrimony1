@@ -130,6 +130,8 @@ async function getUserQuotaDetails(userId) {
     days_remaining: daysRemaining,
     is_time_expired: isTimeExpired,
     is_active: isProfileActive,
+    approval_status: account.approval_status || (isProfileActive ? 'approved' : 'unsubmitted'),
+    submitted_at: account.submitted_at || null,
     is_limit_reached: !isProfileActive || isViewLimitReached || isTimeExpired,
     can_view_contact: canViewContact,
     lock_reason: lockReason
@@ -951,6 +953,127 @@ app.get('/api/biodata', requireUserAuth, async (req, res) => {
   }
 });
 
+// 11b. Submit Complete Profile to Admin for Approval
+app.post('/api/profile/submit-approval', requireUserAuth, async (req, res) => {
+  try {
+    const userId = getUserId(req);
+    const {
+      full_name,
+      gender,
+      dob,
+      marital_status,
+      mother_tongue,
+      diet,
+      location,
+      about_me,
+      education,
+      college,
+      occupation,
+      company,
+      annual_income,
+      rashi,
+      nakshatra,
+      gothram,
+      manglik,
+      pref_age,
+      pref_height,
+      pref_education,
+      pref_locations,
+      photo_url
+    } = req.body;
+
+    // Check all compulsory fields
+    const missing = [];
+    if (!full_name || !full_name.trim()) missing.push('Full Name');
+    if (!gender || !gender.trim()) missing.push('Gender');
+    if (!dob || !dob.trim()) missing.push('Date of Birth');
+    if (!marital_status || !marital_status.trim()) missing.push('Marital Status');
+    if (!mother_tongue || !mother_tongue.trim()) missing.push('Mother Tongue');
+    if (!diet || !diet.trim()) missing.push('Dietary Habit');
+    if (!location || !location.trim()) missing.push('Current Location / City');
+    if (!education || !education.trim()) missing.push('Highest Qualification');
+    if (!occupation || !occupation.trim()) missing.push('Occupation / Designation');
+    if (!annual_income || !annual_income.trim()) missing.push('Annual Income');
+    if (!about_me || about_me.trim().length < 15) missing.push('About Me (Bio - min 15 chars)');
+    if (!photo_url || !photo_url.trim()) missing.push('Profile Photo');
+
+    if (missing.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: `Please complete all compulsory fields before submitting for admin approval. Missing: ${missing.join(', ')}`,
+        missing_fields: missing
+      });
+    }
+
+    const normalizedGender = (gender && gender.toString().trim().toLowerCase() === 'male') ? 'Male' : 'Female';
+
+    // Save/Update user_biodata
+    await query(`
+      INSERT INTO user_biodata (
+        user_id, full_name, gender, dob, marital_status, mother_tongue, diet,
+        location, about_me, education, college, occupation, company, annual_income,
+        rashi, nakshatra, gothram, manglik, pref_age, pref_height, pref_education,
+        pref_locations, photo_url, updated_at
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7,
+        $8, $9, $10, $11, $12, $13, $14,
+        $15, $16, $17, $18, $19, $20, $21,
+        $22, $23, CURRENT_TIMESTAMP
+      )
+      ON CONFLICT (user_id) DO UPDATE SET
+        full_name = EXCLUDED.full_name,
+        gender = EXCLUDED.gender,
+        dob = EXCLUDED.dob,
+        marital_status = EXCLUDED.marital_status,
+        mother_tongue = EXCLUDED.mother_tongue,
+        diet = EXCLUDED.diet,
+        location = EXCLUDED.location,
+        about_me = EXCLUDED.about_me,
+        education = EXCLUDED.education,
+        college = EXCLUDED.college,
+        occupation = EXCLUDED.occupation,
+        company = EXCLUDED.company,
+        annual_income = EXCLUDED.annual_income,
+        rashi = EXCLUDED.rashi,
+        nakshatra = EXCLUDED.nakshatra,
+        gothram = EXCLUDED.gothram,
+        manglik = EXCLUDED.manglik,
+        pref_age = EXCLUDED.pref_age,
+        pref_height = EXCLUDED.pref_height,
+        pref_education = EXCLUDED.pref_education,
+        pref_locations = EXCLUDED.pref_locations,
+        photo_url = COALESCE(EXCLUDED.photo_url, user_biodata.photo_url),
+        updated_at = CURRENT_TIMESTAMP
+    `, [
+      userId, full_name.trim(), normalizedGender, dob.trim(), marital_status.trim(),
+      mother_tongue.trim(), diet.trim(), location.trim(), about_me.trim(),
+      education.trim(), (college || '').trim(), occupation.trim(), (company || '').trim(),
+      annual_income.trim(), (rashi || '').trim(), (nakshatra || '').trim(),
+      (gothram || '').trim(), manglik || 'Non-Manglik', pref_age || '',
+      pref_height || '', pref_education || '', pref_locations || '', photo_url.trim()
+    ]);
+
+    // Update user_accounts status to pending approval
+    await query(`
+      INSERT INTO user_accounts (user_id, created_at, expires_at, is_active, approval_status, submitted_at)
+      VALUES ($1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '3 months', FALSE, 'pending', CURRENT_TIMESTAMP)
+      ON CONFLICT (user_id) DO UPDATE SET
+        approval_status = 'pending',
+        submitted_at = CURRENT_TIMESTAMP,
+        is_active = FALSE
+    `, [userId]);
+
+    res.json({
+      success: true,
+      message: 'Your completed matrimony profile has been submitted to admin for verification and approval.',
+      approval_status: 'pending'
+    });
+  } catch (err) {
+    console.error('Error submitting profile for approval:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // ============================================================================
 // 12. ADMIN PANEL BACKEND ROUTES (Search, Read, Create, Update, Delete Profiles)
 // ============================================================================
@@ -1449,6 +1572,8 @@ app.get('/api/admin/users', checkAdminAuth, async (req, res) => {
         a.created_at,
         a.expires_at,
         COALESCE(a.is_active, FALSE) as is_active,
+        COALESCE(a.approval_status, 'unsubmitted') as approval_status,
+        a.submitted_at,
         b.full_name,
         b.gender,
         b.location,
@@ -1489,9 +1614,9 @@ app.post('/api/admin/users/:userId/activate', checkAdminAuth, async (req, res) =
   try {
     const targetUserId = req.params.userId;
     await query(
-      `INSERT INTO user_accounts (user_id, created_at, expires_at, is_active)
-       VALUES ($1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '3 months', TRUE)
-       ON CONFLICT (user_id) DO UPDATE SET is_active = TRUE`,
+      `INSERT INTO user_accounts (user_id, created_at, expires_at, is_active, approval_status)
+       VALUES ($1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '3 months', TRUE, 'approved')
+       ON CONFLICT (user_id) DO UPDATE SET is_active = TRUE, approval_status = 'approved'`,
       [targetUserId]
     );
     try {
@@ -1516,9 +1641,9 @@ app.post('/api/admin/users/:userId/deactivate', checkAdminAuth, async (req, res)
   try {
     const targetUserId = req.params.userId;
     await query(
-      `INSERT INTO user_accounts (user_id, created_at, expires_at, is_active)
-       VALUES ($1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '3 months', FALSE)
-       ON CONFLICT (user_id) DO UPDATE SET is_active = FALSE`,
+      `INSERT INTO user_accounts (user_id, created_at, expires_at, is_active, approval_status)
+       VALUES ($1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '3 months', FALSE, 'pending')
+       ON CONFLICT (user_id) DO UPDATE SET is_active = FALSE, approval_status = 'pending'`,
       [targetUserId]
     );
     try {

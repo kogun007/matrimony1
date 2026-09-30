@@ -694,8 +694,9 @@
 
               <select id="filterUserActivation" class="filter-select" onchange="loadAdminUsersList()">
                 <option value="all">All Members</option>
-                <option value="pending" selected>Pending Activation Only</option>
-                <option value="active">Active Members Only</option>
+                <option value="pending" selected>Pending Admin Approval Only</option>
+                <option value="active">Approved / Active Members Only</option>
+                <option value="unsubmitted">Profile Incomplete / Draft Only</option>
               </select>
 
               <button type="button" class="btn btn-secondary btn-sm" onclick="loadAdminUsersList()" title="Refresh member list">
@@ -1466,20 +1467,22 @@
 
         // Filter in memory for client-side search & status
         let filtered = allLoadedAdminUsers.filter(u => {
-          if (filterActivation === 'pending' && u.is_active) return false;
+          const isPending = !u.is_active && (u.approval_status === 'pending' || Boolean(u.submitted_at));
+          if (filterActivation === 'pending' && (!isPending || u.is_active)) return false;
           if (filterActivation === 'active' && !u.is_active) return false;
+          if (filterActivation === 'unsubmitted' && (u.is_active || isPending)) return false;
 
           if (searchVal) {
             const uid = (u.user_id || '').toLowerCase();
-            const uname = (u.biodata?.full_name || '').toLowerCase();
-            const uloc = (u.biodata?.location || '').toLowerCase();
+            const uname = (u.biodata?.full_name || u.full_name || '').toLowerCase();
+            const uloc = (u.biodata?.location || u.location || '').toLowerCase();
             return uid.includes(searchVal) || uname.includes(searchVal) || uloc.includes(searchVal);
           }
           return true;
         });
 
-        const pendingCount = allLoadedAdminUsers.filter(u => !u.is_active).length;
-        badge.textContent = `${filtered.length} Member${filtered.length === 1 ? '' : 's'} (${pendingCount} Pending Activation)`;
+        const pendingApprovalCount = allLoadedAdminUsers.filter(u => !u.is_active && (u.approval_status === 'pending' || Boolean(u.submitted_at))).length;
+        badge.textContent = `${filtered.length} Member${filtered.length === 1 ? '' : 's'} (${pendingApprovalCount} Awaiting Admin Approval)`;
         subheader.textContent = `Showing ${filtered.length} of ${allLoadedAdminUsers.length} total registered accounts in PostgreSQL`;
 
         if (filtered.length === 0) {
@@ -1496,8 +1499,16 @@
 
         tbody.innerHTML = filtered.map(u => {
           const isActive = Boolean(u.is_active);
-          const bio = u.biodata || {};
+          const bio = u.biodata || {
+            full_name: u.full_name,
+            gender: u.gender,
+            location: u.location,
+            education: u.education,
+            occupation: u.occupation,
+            photo_url: u.photo_url
+          };
           const hasBio = Boolean(bio.full_name);
+          const isPending = !isActive && (u.approval_status === 'pending' || Boolean(u.submitted_at));
 
           const createdDate = u.created_at ? new Date(u.created_at).toLocaleDateString('en-IN', {
             day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -1514,12 +1525,16 @@
           const statusBadge = isActive
             ? `<span style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.76rem; font-weight: 700; color: #166534; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 0.25rem 0.65rem; border-radius: var(--radius-full);">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                Active Member
+                Approved & Active
               </span>`
-            : `<span style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.76rem; font-weight: 700; color: #b45309; background: #fef3c7; border: 1px solid #fde68a; padding: 0.25rem 0.65rem; border-radius: var(--radius-full);">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                Pending Activation
-              </span>`;
+            : (isPending
+              ? `<span style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.76rem; font-weight: 700; color: #b45309; background: #fef3c7; border: 1px solid #fde68a; padding: 0.25rem 0.65rem; border-radius: var(--radius-full);" title="User submitted completed profile, awaiting admin review">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  ⏳ Pending Admin Approval
+                </span>`
+              : `<span style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.76rem; font-weight: 700; color: #64748b; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 0.25rem 0.65rem; border-radius: var(--radius-full);" title="User has not submitted completed profile yet">
+                  📝 Profile Incomplete
+                </span>`);
 
           const actionButton = isActive
             ? `<button type="button" class="btn btn-secondary btn-sm" onclick="handleDeactivateUser('${u.user_id}')" style="font-size: 0.76rem; padding: 0.35rem 0.7rem; color: var(--danger);" title="Revoke contact details access">

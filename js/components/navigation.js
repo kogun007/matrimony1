@@ -126,7 +126,7 @@ class MatrimonyNavigation {
         navHtml += `<div class="nav-section-label">${item.section}</div>`;
       } else if (item.isLocked) {
         navHtml += `
-          <a href="javascript:void(0)" class="nav-item nav-item-locked" data-tooltip="${item.label} (Locked)" onclick="if(window.toast){window.toast.show('Access restricted: Please create your profile first. Other website features are disabled.', 'warning', 4000);} return false;" style="opacity: 0.45; cursor: not-allowed;">
+          <a href="javascript:void(0)" class="nav-item nav-item-locked" data-tooltip="${item.label} (Locked)" onclick="if(window.toast){const st = localStorage.getItem('matrimony_approval_status'); const msg = st === 'pending' ? 'Access restricted: Your profile is pending administrator approval. All other features unlock once approved.' : 'Access restricted: Please complete your compulsory profile and submit for admin approval.'; window.toast.show(msg, 'warning', 4500);} return false;" style="opacity: 0.45; cursor: not-allowed;">
             <span class="nav-icon">${item.icon}</span>
             <span class="nav-label">${item.label}</span>
             <span class="nav-badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 9999px;">🔒 Locked</span>
@@ -298,7 +298,11 @@ class MatrimonyNavigation {
         if (!link.classList.contains('footer-auth-link') && !link.getAttribute('href')?.includes('profile.html')) {
           link.onclick = (e) => {
             e.preventDefault();
-            if (window.toast) window.toast.show('Access restricted: Please create your profile first. Other website features are disabled.', 'warning');
+            const st = localStorage.getItem('matrimony_approval_status');
+            const msg = st === 'pending'
+              ? 'Access restricted: Your profile is pending administrator approval. All other features unlock once approved.'
+              : 'Access restricted: Please complete your compulsory profile and submit for admin approval. Other website features are disabled.';
+            if (window.toast) window.toast.show(msg, 'warning', 4500);
           };
           link.style.opacity = '0.5';
           link.style.cursor = 'not-allowed';

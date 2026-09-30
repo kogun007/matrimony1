@@ -13,6 +13,82 @@
   <link rel="stylesheet" href="styles/tokens.css">
   <link rel="stylesheet" href="styles/layout.css">
   <link rel="stylesheet" href="styles/components.css">
+  <style>
+    .compulsory-star {
+      color: var(--danger, #ef4444);
+      font-weight: 800;
+      margin-left: 3px;
+    }
+    .compulsory-pill {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #dc2626;
+      background: #fee2e2;
+      padding: 2px 7px;
+      border-radius: 9999px;
+      margin-left: 6px;
+      display: inline-block;
+      vertical-align: middle;
+      letter-spacing: 0.02em;
+      border: 1px solid rgba(220, 38, 38, 0.25);
+      transition: all 0.2s ease;
+    }
+    .compulsory-pill.filled {
+      color: #166534;
+      background: #dcfce7;
+      border-color: rgba(22, 101, 52, 0.25);
+    }
+    .field-compulsory-error {
+      border-color: #ef4444 !important;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+      animation: fieldShake 0.4s ease-in-out;
+    }
+    @keyframes fieldShake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-4px); }
+      40%, 80% { transform: translateX(4px); }
+    }
+    .missing-pill-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #fff1f2;
+      color: #be123c;
+      border: 1px solid #fecdd3;
+      border-radius: 9999px;
+      padding: 0.25rem 0.65rem;
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .missing-pill-btn:hover {
+      background: #ffe4e6;
+      border-color: #fda4af;
+      transform: translateY(-1px);
+    }
+    .approval-workflow-card {
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      border: 1.5px solid var(--surface-border);
+      padding: 1.35rem 1.6rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s ease;
+    }
+    .approval-workflow-card.state-pending {
+      border-color: #f59e0b;
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.06) 0%, rgba(251, 191, 36, 0.09) 100%);
+    }
+    .approval-workflow-card.state-approved {
+      border-color: #10b981;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, rgba(5, 150, 105, 0.09) 100%);
+    }
+    .approval-workflow-card.state-unsubmitted {
+      border-color: #6366f1;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(236, 72, 153, 0.05) 100%);
+    }
+  </style>
 </head>
 <body>
 
@@ -54,19 +130,53 @@
       <!-- Page Content -->
       <main class="content-container">
         
-        <!-- Restricted New User Profile Notice -->
-        <div class="card" id="newUserProfileNotice" style="display: none; background: linear-gradient(135deg, rgba(99,102,241,0.06) 0%, rgba(236,72,153,0.06) 100%); border: 1.5px solid rgba(99,102,241,0.25); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm);">
-          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
-            <div style="display: flex; align-items: flex-start; gap: 1rem;">
-              <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        <!-- Compulsory Profile Completion & Admin Approval Workflow Card -->
+        <div id="profileApprovalCard" class="approval-workflow-card state-unsubmitted" style="display: none;">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 1.25rem; flex-wrap: wrap;">
+            <div style="display: flex; align-items: flex-start; gap: 0.9rem; flex: 1; min-width: 280px;">
+              <div id="approvalCardIcon" style="width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: rgba(99,102,241,0.12); color: #4f46e5;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
               </div>
               <div>
-                <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.3rem; color: var(--text-main);">Welcome! Please Create Your Matrimony Profile</h3>
-                <p style="font-size: 0.86rem; color: var(--text-muted); margin: 0; line-height: 1.5;">Your email registration is active. Complete your personal details, horoscope, lifestyle, and partner preferences below and upload your profile photo to create your profile. <strong>Notice:</strong> All other website features are disabled for your account.</p>
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.25rem;">
+                  <h3 id="approvalCardTitle" style="font-size: 1.05rem; font-weight: 700; margin: 0; color: var(--text-main);">
+                    Compulsory Profile Completion
+                  </h3>
+                  <span id="approvalCardBadge" style="font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.65rem; border-radius: 9999px; background: #e0e7ff; color: #4338ca; border: 1px solid rgba(99,102,241,0.25);">
+                    Step 1: Fill Required Details
+                  </span>
+                </div>
+                <p id="approvalCardSubtitle" style="font-size: 0.84rem; color: var(--text-muted); margin: 0; line-height: 1.45;">
+                  Complete all 12 compulsory fields and upload your profile photo to submit your profile for administrator approval. All other platform features remain locked until an admin approves your profile.
+                </p>
               </div>
             </div>
-            <span style="font-size: 0.78rem; font-weight: 700; background: rgba(99,102,241,0.12); color: var(--primary); padding: 0.35rem 0.85rem; border-radius: 9999px; border: 1px solid rgba(99,102,241,0.2);">Profile Creation Mode</span>
+
+            <!-- Action Button / Pending Review Display -->
+            <div id="approvalCardActionWrap" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
+              <button type="button" id="btnSubmitAdminApproval" class="btn btn-primary" onclick="handleSubmitForAdminApproval()" style="padding: 0.65rem 1.35rem; font-weight: 700; gap: 0.5rem; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.25);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                <span>Submit Profile for Admin Approval</span>
+              </button>
+              <span id="approvalBtnHint" style="font-size: 0.75rem; color: var(--text-muted);">Completing all 12 compulsory fields required</span>
+            </div>
+          </div>
+
+          <!-- Progress Bar & Pending Pills Section -->
+          <div id="approvalProgressSection" style="margin-top: 1rem; padding-top: 0.85rem; border-top: 1px solid rgba(0,0,0,0.06);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; font-size: 0.82rem;">
+              <span style="font-weight: 600; color: var(--text-main);">Compulsory Completion Checklist</span>
+              <span id="compulsoryProgressText" style="font-weight: 700; color: #4f46e5;">0 / 12 Required Fields Completed (0%)</span>
+            </div>
+            <div style="width: 100%; height: 8px; background: rgba(0,0,0,0.06); border-radius: 9999px; overflow: hidden; position: relative;">
+              <div id="compulsoryProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #6366f1 0%, #ec4899 100%); transition: width 0.3s ease; border-radius: 9999px;"></div>
+            </div>
+
+            <!-- Missing Required Fields Quick-Jump Pills -->
+            <div id="missingFieldsWrap" style="margin-top: 0.75rem; display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; font-size: 0.76rem;">
+              <span style="color: var(--text-muted); font-weight: 600;">Click to complete missing fields:</span>
+              <div id="missingFieldsList" style="display: flex; gap: 0.35rem; flex-wrap: wrap;"></div>
+            </div>
           </div>
         </div>
 
@@ -170,57 +280,61 @@
             <div class="profile-form-grid">
               
               <div class="form-group">
-                <label for="prof-fullname" class="form-label">Full Name</label>
-                <input type="text" id="prof-fullname" class="form-input no-icon" value="Priya Sharma">
+                <label for="prof-fullname" class="form-label">Full Name <span class="compulsory-star">*</span><span id="badge-req-prof-fullname" class="compulsory-pill">Required</span></label>
+                <input type="text" id="prof-fullname" class="form-input no-icon" placeholder="e.g. Rahul Mehta">
               </div>
 
               <div class="form-group">
-                <label for="prof-gender" class="form-label">My Gender (Defines Opposite-Gender Matches)</label>
+                <label for="prof-gender" class="form-label">My Gender <span class="compulsory-star">*</span><span id="badge-req-prof-gender" class="compulsory-pill">Required</span></label>
                 <select id="prof-gender" class="form-select no-icon">
+                  <option value="" disabled selected>-- Select Gender --</option>
                   <option value="Female">Female (View Male Grooms)</option>
                   <option value="Male">Male (View Female Brides)</option>
                 </select>
               </div>
 
               <div class="form-group">
-                <label for="prof-dob" class="form-label">Date of Birth</label>
-                <input type="date" id="prof-dob" class="form-input no-icon" value="1999-06-14">
+                <label for="prof-dob" class="form-label">Date of Birth <span class="compulsory-star">*</span><span id="badge-req-prof-dob" class="compulsory-pill">Required (18+)</span></label>
+                <input type="date" id="prof-dob" class="form-input no-icon">
               </div>
 
               <div class="form-group">
-                <label for="prof-marital" class="form-label">Marital Status</label>
+                <label for="prof-marital" class="form-label">Marital Status <span class="compulsory-star">*</span><span id="badge-req-prof-marital" class="compulsory-pill">Required</span></label>
                 <select id="prof-marital" class="form-select no-icon">
-                  <option selected>Never Married</option>
-                  <option>Divorced</option>
-                  <option>Widowed</option>
+                  <option value="" disabled selected>-- Select Marital Status --</option>
+                  <option value="Never Married">Never Married</option>
+                  <option value="Divorced">Divorced</option>
+                  <option value="Widowed">Widowed</option>
                 </select>
               </div>
 
               <div class="form-group">
-                <label for="prof-tongue" class="form-label">Mother Tongue</label>
-                <input type="text" id="prof-tongue" class="form-input no-icon" value="Marathi">
+                <label for="prof-tongue" class="form-label">Mother Tongue <span class="compulsory-star">*</span><span id="badge-req-prof-tongue" class="compulsory-pill">Required</span></label>
+                <input type="text" id="prof-tongue" class="form-input no-icon" placeholder="e.g. Gujarati / Hindi / Marathi">
               </div>
 
               <div class="form-group">
-                <label for="prof-diet" class="form-label">Dietary Habit</label>
+                <label for="prof-diet" class="form-label">Dietary Habit <span class="compulsory-star">*</span><span id="badge-req-prof-diet" class="compulsory-pill">Required</span></label>
                 <select id="prof-diet" class="form-select no-icon">
-                  <option selected>Vegetarian</option>
-                  <option>Non-Vegetarian</option>
-                  <option>Eggetarian</option>
-                  <option>Vegan</option>
+                  <option value="" disabled selected>-- Select Dietary Habit --</option>
+                  <option value="Pure Jain Vegetarian">Pure Jain Vegetarian</option>
+                  <option value="Vegetarian">Vegetarian</option>
+                  <option value="Eggetarian">Eggetarian</option>
+                  <option value="Non-Vegetarian">Non-Vegetarian</option>
+                  <option value="Vegan">Vegan</option>
                 </select>
               </div>
 
               <div class="form-group">
-                <label for="prof-location" class="form-label">Current City / State</label>
-                <input type="text" id="prof-location" class="form-input no-icon" value="Pune, Maharashtra, India">
+                <label for="prof-location" class="form-label">Current City / State <span class="compulsory-star">*</span><span id="badge-req-prof-location" class="compulsory-pill">Required</span></label>
+                <input type="text" id="prof-location" class="form-input no-icon" placeholder="e.g. Mumbai, Maharashtra">
               </div>
 
             </div>
 
             <div class="form-group" style="margin-top: 1.5rem;">
-              <label for="prof-about" class="form-label">About Me (Bio)</label>
-              <textarea id="prof-about" class="form-input no-icon" rows="4" style="resize: vertical; line-height: 1.6;">Software engineer working at a leading cloud tech firm in Pune. Passionate about classical Indian dance, landscape painting, and weekend baking. Looking for a progressive, family-oriented partner with similar cultural grounding.</textarea>
+              <label for="prof-about" class="form-label">About Me (Bio) <span class="compulsory-star">*</span><span id="badge-req-prof-about" class="compulsory-pill">Required (Min 15 chars)</span></label>
+              <textarea id="prof-about" class="form-input no-icon" rows="4" style="resize: vertical; line-height: 1.6;" placeholder="Describe your background, personality, family, and what you are looking for in a life partner (min 15 characters)..."></textarea>
             </div>
           </div>
           <div class="profile-card-footer">
@@ -244,28 +358,28 @@
             <div class="profile-form-grid">
               
               <div class="form-group">
-                <label for="prof-education" class="form-label">Highest Qualification</label>
-                <input type="text" id="prof-education" class="form-input no-icon" value="B.Tech in Computer Science">
+                <label for="prof-education" class="form-label">Highest Qualification <span class="compulsory-star">*</span><span id="badge-req-prof-education" class="compulsory-pill">Required</span></label>
+                <input type="text" id="prof-education" class="form-input no-icon" placeholder="e.g. B.Tech / MBA / MBBS / CA">
               </div>
 
               <div class="form-group">
                 <label for="prof-college" class="form-label">College / University</label>
-                <input type="text" id="prof-college" class="form-input no-icon" value="COEP Technological University, Pune">
+                <input type="text" id="prof-college" class="form-input no-icon" placeholder="e.g. IIT Bombay / Mumbai University">
               </div>
 
               <div class="form-group">
-                <label for="prof-occupation" class="form-label">Occupation / Designation</label>
-                <input type="text" id="prof-occupation" class="form-input no-icon" value="Senior Frontend Engineer">
+                <label for="prof-occupation" class="form-label">Occupation / Designation <span class="compulsory-star">*</span><span id="badge-req-prof-occupation" class="compulsory-pill">Required</span></label>
+                <input type="text" id="prof-occupation" class="form-input no-icon" placeholder="e.g. Software Architect / Financial Analyst">
               </div>
 
               <div class="form-group">
                 <label for="prof-employer" class="form-label">Employed In / Company</label>
-                <input type="text" id="prof-employer" class="form-input no-icon" value="Cisco Systems">
+                <input type="text" id="prof-employer" class="form-input no-icon" placeholder="e.g. Microsoft / Tata Consultancy">
               </div>
 
               <div class="form-group">
-                <label for="prof-income" class="form-label">Annual Income</label>
-                <input type="text" id="prof-income" class="form-input no-icon" value="₹24 - 30 LPA">
+                <label for="prof-income" class="form-label">Annual Income <span class="compulsory-star">*</span><span id="badge-req-prof-income" class="compulsory-pill">Required</span></label>
+                <input type="text" id="prof-income" class="form-input no-icon" placeholder="e.g. ₹20 - 25 LPA">
               </div>
 
             </div>
@@ -389,20 +503,58 @@
   <script src="js/components/navigation.js"></script>
 
   <script>
+    const COMPULSORY_FIELDS = [
+      { id: 'prof-fullname', name: 'Full Name', tab: 'basic', validate: (v) => Boolean(v && v.trim().length >= 2) },
+      { id: 'prof-gender', name: 'Gender', tab: 'basic', validate: (v) => Boolean(v && (v === 'Male' || v === 'Female')) },
+      { id: 'prof-dob', name: 'Date of Birth (18+)', tab: 'basic', validate: (v) => {
+        if (!v) return false;
+        const dobDate = new Date(v);
+        if (isNaN(dobDate.getTime())) return false;
+        const diff = Date.now() - dobDate.getTime();
+        const age = Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+        return age >= 18;
+      }},
+      { id: 'prof-marital', name: 'Marital Status', tab: 'basic', validate: (v) => Boolean(v && v.trim() && v !== '-- Select Marital Status --') },
+      { id: 'prof-tongue', name: 'Mother Tongue', tab: 'basic', validate: (v) => Boolean(v && v.trim().length >= 2) },
+      { id: 'prof-diet', name: 'Dietary Habit', tab: 'basic', validate: (v) => Boolean(v && v.trim() && v !== '-- Select Dietary Habit --') },
+      { id: 'prof-location', name: 'Current City/State', tab: 'basic', validate: (v) => Boolean(v && v.trim().length >= 3) },
+      { id: 'prof-about', name: 'About Me (Bio)', tab: 'basic', validate: (v) => Boolean(v && v.trim().length >= 15) },
+      { id: 'prof-education', name: 'Highest Qualification', tab: 'career', validate: (v) => Boolean(v && v.trim().length >= 2) },
+      { id: 'prof-occupation', name: 'Occupation', tab: 'career', validate: (v) => Boolean(v && v.trim().length >= 2) },
+      { id: 'prof-income', name: 'Annual Income', tab: 'career', validate: (v) => Boolean(v && v.trim().length >= 2) },
+      { id: 'photo', name: 'Profile Photo', tab: 'basic', validate: () => {
+        if (pendingPhotoData) return true;
+        const img = document.getElementById('profileAvatarImg');
+        if (!img || !img.src) return false;
+        if (img.dataset.isDefault === 'true') return false;
+        return Boolean(img.src && !img.src.includes('data:image/svg') && img.src.length > 5);
+      }}
+    ];
+
+    let pendingPhotoData = null;
+    let pendingPhotoFileName = '';
+
     document.addEventListener('DOMContentLoaded', async () => {
       new MatrimonyNavigation({ activePage: 'profile' });
       updateProfileGenderDisplay();
+
+      // Bind real-time input change listeners to all compulsory fields
+      ['prof-fullname', 'prof-gender', 'prof-dob', 'prof-marital', 'prof-tongue', 'prof-diet', 'prof-location', 'prof-about', 'prof-education', 'prof-occupation', 'prof-income'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', () => updateCompulsoryProgress());
+          el.addEventListener('change', () => updateCompulsoryProgress());
+        }
+      });
 
       // Load saved user biodata and photo from database
       await loadProfileBiodata();
 
       window.addEventListener('userGenderChanged', () => {
         updateProfileGenderDisplay();
+        updateCompulsoryProgress();
       });
     });
-
-    let pendingPhotoData = null;
-    let pendingPhotoFileName = '';
 
     function triggerPhotoPicker() {
       const fileInput = document.getElementById('photoFileInput');
@@ -425,91 +577,321 @@
         pendingPhotoData = e.target.result;
         pendingPhotoFileName = file.name;
         
-        // Optimistic UI preview only - do NOT save to database yet!
+        // Optimistic UI preview
         const avatarImg = document.getElementById('profileAvatarImg');
-        if (avatarImg) avatarImg.src = pendingPhotoData;
+        if (avatarImg) {
+          avatarImg.src = pendingPhotoData;
+          avatarImg.dataset.isDefault = 'false';
+        }
 
-        window.toast.show('Photo preview updated! Click "Save Changes" to save to database. 📸', 'info');
+        updateCompulsoryProgress();
+        window.toast.show('Photo selected! Remember to submit for admin approval to finalize. 📸', 'info');
       };
       reader.readAsDataURL(file);
     }
 
-    async function loadProfileBiodata() {
-      const isNewUser = localStorage.getItem('matrimony_is_new_user') === 'true';
-      const userEmail = localStorage.getItem('matrimony_user_email');
-      const noticeBanner = document.getElementById('newUserProfileNotice');
-      if (noticeBanner) {
-        noticeBanner.style.display = isNewUser ? 'block' : 'none';
+    function evaluateCompulsoryFields() {
+      const getVal = (id) => {
+        const el = document.getElementById(id);
+        return el ? el.value.trim() : '';
+      };
+
+      const results = COMPULSORY_FIELDS.map(field => {
+        const valid = field.id === 'photo' ? field.validate() : field.validate(getVal(field.id));
+        return {
+          ...field,
+          isValid: valid
+        };
+      });
+
+      const completedCount = results.filter(r => r.isValid).length;
+      const totalCount = results.length;
+      const isAllValid = completedCount === totalCount;
+      const missingFields = results.filter(r => !r.isValid);
+
+      return {
+        results,
+        completedCount,
+        totalCount,
+        isAllValid,
+        missingFields,
+        percent: Math.round((completedCount / totalCount) * 100)
+      };
+    }
+
+    function updateCompulsoryProgress() {
+      const evalResult = evaluateCompulsoryFields();
+      
+      // 1. Update pill badges next to labels
+      evalResult.results.forEach(res => {
+        const badge = document.getElementById(`badge-req-${res.id}`);
+        if (badge) {
+          if (res.isValid) {
+            badge.classList.add('filled');
+            badge.textContent = '✓ Done';
+          } else {
+            badge.classList.remove('filled');
+            badge.textContent = res.id === 'prof-dob' ? 'Required (18+)' : (res.id === 'prof-about' ? 'Required (Min 15 chars)' : 'Required');
+          }
+        }
+      });
+
+      // 2. Update progress bar & text
+      const progressText = document.getElementById('compulsoryProgressText');
+      if (progressText) {
+        progressText.textContent = `${evalResult.completedCount} / ${evalResult.totalCount} Required Fields Completed (${evalResult.percent}%)`;
+        progressText.style.color = evalResult.isAllValid ? '#166534' : '#4f46e5';
       }
 
-      if (isNewUser) {
-        const saveBtnText = document.querySelector('.save-btn-text');
-        if (saveBtnText) saveBtnText.textContent = 'Create Profile';
+      const progressBar = document.getElementById('compulsoryProgressBar');
+      if (progressBar) {
+        progressBar.style.width = `${evalResult.percent}%`;
+        progressBar.style.background = evalResult.isAllValid 
+          ? 'linear-gradient(90deg, #10b981 0%, #059669 100%)' 
+          : 'linear-gradient(90deg, #6366f1 0%, #ec4899 100%)';
+      }
+
+      // 3. Render missing pills
+      const missingList = document.getElementById('missingFieldsList');
+      const missingWrap = document.getElementById('missingFieldsWrap');
+      if (missingList && missingWrap) {
+        if (evalResult.isAllValid) {
+          missingWrap.style.display = 'none';
+        } else {
+          missingWrap.style.display = 'flex';
+          missingList.innerHTML = evalResult.missingFields.map(field => `
+            <button type="button" class="missing-pill-btn" onclick="focusCompulsoryField('${field.id}', '${field.tab}')">
+              <span>+ ${field.name}</span>
+            </button>
+          `).join('');
+        }
+      }
+
+      // 4. Update topbar badge
+      const topbarBadge = document.querySelector('.topbar-badge');
+      if (topbarBadge) {
+        topbarBadge.textContent = evalResult.isAllValid ? '100% Ready for Approval' : `${evalResult.percent}% Complete`;
+      }
+
+      return evalResult;
+    }
+
+    function focusCompulsoryField(fieldId, tabName) {
+      if (tabName) {
+        const tabBtn = document.querySelector(`.tab-btn[onclick*="${tabName}"]`);
+        switchProfileSection(tabName, tabBtn);
+      }
+
+      if (fieldId === 'photo') {
+        triggerPhotoPicker();
+        const avatar = document.getElementById('profileAvatarImg');
+        if (avatar) {
+          avatar.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          avatar.classList.add('field-compulsory-error');
+          setTimeout(() => avatar.classList.remove('field-compulsory-error'), 1800);
+        }
+        return;
+      }
+
+      const el = document.getElementById(fieldId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('field-compulsory-error');
+        el.focus();
+        setTimeout(() => el.classList.remove('field-compulsory-error'), 2000);
+      }
+    }
+
+    function renderApprovalWorkflowCard(status, isNewUser, submittedAt) {
+      const card = document.getElementById('profileApprovalCard');
+      if (!card) return;
+
+      // Always show for new users or if status is unsubmitted/pending
+      card.style.display = 'block';
+
+      const iconEl = document.getElementById('approvalCardIcon');
+      const titleEl = document.getElementById('approvalCardTitle');
+      const badgeEl = document.getElementById('approvalCardBadge');
+      const subtitleEl = document.getElementById('approvalCardSubtitle');
+      const actionWrap = document.getElementById('approvalCardActionWrap');
+      const progressSection = document.getElementById('approvalProgressSection');
+
+      if (status === 'pending') {
+        card.className = 'approval-workflow-card state-pending';
+        if (iconEl) {
+          iconEl.style.background = 'rgba(245, 158, 11, 0.15)';
+          iconEl.style.color = '#b45309';
+          iconEl.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
+        }
+        if (titleEl) titleEl.textContent = '⏳ Profile Submitted for Admin Approval';
+        if (badgeEl) {
+          badgeEl.style.background = '#fef3c7';
+          badgeEl.style.color = '#b45309';
+          badgeEl.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+          badgeEl.textContent = 'Under Admin Review';
+        }
+        const timeFormatted = submittedAt ? new Date(submittedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'recently';
+        if (subtitleEl) {
+          subtitleEl.innerHTML = `Your profile was submitted on <strong>${timeFormatted}</strong> and forwarded to the administrator. <strong>All other website features (browsing matches, search, shortlists) remain restricted</strong> until your profile is reviewed and approved.`;
+        }
+        if (actionWrap) {
+          actionWrap.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
+              <div style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.55rem 1.15rem; background: #fef3c7; color: #b45309; border: 1.5px solid #fde68a; border-radius: var(--radius-md); font-weight: 700; font-size: 0.85rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <span>Pending Admin Approval</span>
+              </div>
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="handleSubmitForAdminApproval(true)" style="font-size: 0.78rem; padding: 0.35rem 0.75rem;">
+                <span>Update & Re-Submit Profile</span>
+              </button>
+            </div>
+          `;
+        }
+        if (progressSection) progressSection.style.display = 'block';
+      } else if (status === 'approved') {
+        card.className = 'approval-workflow-card state-approved';
+        if (iconEl) {
+          iconEl.style.background = 'rgba(16, 185, 129, 0.15)';
+          iconEl.style.color = '#15803d';
+          iconEl.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+        }
+        if (titleEl) titleEl.textContent = '✅ Profile Approved & Platform Unlocked';
+        if (badgeEl) {
+          badgeEl.style.background = '#dcfce7';
+          badgeEl.style.color = '#15803d';
+          badgeEl.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+          badgeEl.textContent = 'Active Member';
+        }
+        if (subtitleEl) {
+          subtitleEl.innerHTML = 'Congratulations! Your profile has been approved by the administrator. All website features, member searches, and match interactions are now unlocked.';
+        }
+        if (actionWrap) {
+          actionWrap.innerHTML = `
+            <a href="index.html" class="btn btn-primary" style="padding: 0.65rem 1.35rem; font-weight: 700; gap: 0.4rem; text-decoration: none;">
+              <span>Explore Matches Now →</span>
+            </a>
+          `;
+        }
+        if (progressSection) progressSection.style.display = 'none';
+      } else {
+        // Unsubmitted / Draft
+        card.className = 'approval-workflow-card state-unsubmitted';
+        if (iconEl) {
+          iconEl.style.background = 'rgba(99, 102, 241, 0.12)';
+          iconEl.style.color = '#4f46e5';
+          iconEl.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`;
+        }
+        if (titleEl) titleEl.textContent = 'Compulsory Profile Completion & Verification';
+        if (badgeEl) {
+          badgeEl.style.background = '#e0e7ff';
+          badgeEl.style.color = '#4338ca';
+          badgeEl.style.borderColor = 'rgba(99, 102, 241, 0.25)';
+          badgeEl.textContent = 'Step 1: Fill Required Details';
+        }
+        if (subtitleEl) {
+          subtitleEl.innerHTML = 'As a new member, completing all 12 compulsory fields and uploading your photo is mandatory. Once submitted, your profile will be sent to the admin for approval.';
+        }
+        if (actionWrap) {
+          actionWrap.innerHTML = `
+            <button type="button" id="btnSubmitAdminApproval" class="btn btn-primary" onclick="handleSubmitForAdminApproval()" style="padding: 0.65rem 1.35rem; font-weight: 700; gap: 0.5rem; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.25);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+              <span>Submit Profile for Admin Approval</span>
+            </button>
+            <span id="approvalBtnHint" style="font-size: 0.75rem; color: var(--text-muted);">Completing all 12 compulsory fields required</span>
+          `;
+        }
+        if (progressSection) progressSection.style.display = 'block';
+      }
+    }
+
+    async function loadProfileBiodata() {
+      const isNewUser = isNewUserRestricted();
+      const userEmail = localStorage.getItem('matrimony_user_email');
+      let approvalStatus = localStorage.getItem('matrimony_approval_status') || 'unsubmitted';
+
+      const avatarImg = document.getElementById('profileAvatarImg');
+      if (avatarImg && (!avatarImg.src || avatarImg.src.includes('photo-1534528741775'))) {
+        if (isNewUser) {
+          avatarImg.dataset.isDefault = 'true';
+        }
       }
 
       try {
         const biodata = await fetchUserBiodataFromApi();
+        
         if (!biodata) {
-          if (isNewUser && userEmail) {
-            const nameEl = document.getElementById('profileDisplayName');
-            if (nameEl) nameEl.textContent = userEmail.split('@')[0];
-            const idEl = document.getElementById('profileDisplayId');
-            if (idEl) idEl.textContent = `Email: ${userEmail}`;
-            const topbarBadge = document.querySelector('.topbar-badge');
-            if (topbarBadge) topbarBadge.textContent = 'Profile Setup Required';
-            const heroBadge = document.querySelector('.profile-hero-badge span');
-            if (heroBadge) heroBadge.textContent = 'New Candidate';
-            const nameInput = document.getElementById('prof-fullname');
-            if (nameInput && !nameInput.value) nameInput.value = userEmail.split('@')[0];
+          if (isNewUser) {
+            // Clear default values so that new user is forced to enter their own data
+            ['prof-fullname', 'prof-dob', 'prof-tongue', 'prof-location', 'prof-about', 'prof-education', 'prof-college', 'prof-occupation', 'prof-employer', 'prof-income'].forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.value = '';
+            });
+            ['prof-gender', 'prof-marital', 'prof-diet'].forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.value = '';
+            });
+            if (avatarImg) avatarImg.dataset.isDefault = 'true';
+
+            if (userEmail) {
+              const idEl = document.getElementById('profileDisplayId');
+              if (idEl) idEl.textContent = `Email: ${userEmail}`;
+              const nameEl = document.getElementById('profileDisplayName');
+              if (nameEl) nameEl.textContent = userEmail.split('@')[0];
+              const heroBadge = document.querySelector('.profile-hero-badge span');
+              if (heroBadge) heroBadge.textContent = 'New Candidate';
+            }
           }
-          return;
+        } else {
+          // Fill existing saved biodata
+          const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el && val !== undefined && val !== null) el.value = val;
+          };
+
+          setVal('prof-fullname', biodata.full_name);
+          setVal('prof-gender', biodata.gender);
+          setVal('prof-dob', biodata.dob);
+          setVal('prof-marital', biodata.marital_status);
+          setVal('prof-tongue', biodata.mother_tongue);
+          setVal('prof-diet', biodata.diet);
+          setVal('prof-location', biodata.location);
+          setVal('prof-about', biodata.about_me);
+
+          setVal('prof-education', biodata.education);
+          setVal('prof-college', biodata.college);
+          setVal('prof-occupation', biodata.occupation);
+          setVal('prof-employer', biodata.company);
+          setVal('prof-income', biodata.annual_income);
+
+          setVal('prof-rashi', biodata.rashi);
+          setVal('prof-nakshatra', biodata.nakshatra);
+          setVal('prof-gothram', biodata.gothram);
+          setVal('prof-manglik', biodata.manglik);
+
+          setVal('pref-age', biodata.pref_age);
+          setVal('pref-height', biodata.pref_height);
+          setVal('pref-education', biodata.pref_education);
+          setVal('pref-locations', biodata.pref_locations);
+
+          if (biodata.photo_url) {
+            if (avatarImg) {
+              avatarImg.src = biodata.photo_url;
+              avatarImg.dataset.isDefault = 'false';
+            }
+          }
+
+          updateHeaderCardDisplays(biodata);
+
+          if (biodata.gender) {
+            setUserGender(biodata.gender);
+            updateProfileGenderDisplay();
+          }
         }
 
-        const setVal = (id, val) => {
-          const el = document.getElementById(id);
-          if (el && val !== undefined && val !== null) el.value = val;
-        };
-
-        setVal('prof-fullname', biodata.full_name);
-        setVal('prof-gender', biodata.gender);
-        setVal('prof-dob', biodata.dob);
-        setVal('prof-marital', biodata.marital_status);
-        setVal('prof-tongue', biodata.mother_tongue);
-        setVal('prof-diet', biodata.diet);
-        setVal('prof-location', biodata.location);
-        setVal('prof-about', biodata.about_me);
-
-        setVal('prof-education', biodata.education);
-        setVal('prof-college', biodata.college);
-        setVal('prof-occupation', biodata.occupation);
-        setVal('prof-employer', biodata.company);
-        setVal('prof-income', biodata.annual_income);
-
-        setVal('prof-rashi', biodata.rashi);
-        setVal('prof-nakshatra', biodata.nakshatra);
-        setVal('prof-gothram', biodata.gothram);
-        setVal('prof-manglik', biodata.manglik);
-
-        setVal('pref-age', biodata.pref_age);
-        setVal('pref-height', biodata.pref_height);
-        setVal('pref-education', biodata.pref_education);
-        setVal('pref-locations', biodata.pref_locations);
-
-        if (biodata.photo_url) {
-          const avatarImg = document.getElementById('profileAvatarImg');
-          if (avatarImg) avatarImg.src = biodata.photo_url;
-        }
-
-        updateHeaderCardDisplays(biodata);
-
-        if (biodata.gender) {
-          setUserGender(biodata.gender);
-          updateProfileGenderDisplay();
-        }
-
-        // Fetch and display 3-month validity & 75-view quota status
+        // Fetch backend quota and latest approval status
         if (typeof fetchUserQuota === 'function') {
-          fetchUserQuota().then(quota => {
+          try {
+            const quota = await fetchUserQuota();
             if (quota && quota.success) {
               const createdEl = document.getElementById('profCreatedAtDisplay');
               const validEl = document.getElementById('profValidityCountdown');
@@ -537,9 +919,18 @@
                   actEl.innerHTML = '<span style="color: #b45309; background: #fef3c7; border: 1px solid #fde68a; padding: 0.15rem 0.5rem; border-radius: var(--radius-full); display: inline-flex; align-items: center; gap: 0.25rem;" title="An administrator must activate your profile before you can view candidate phone & email details">⏳ Pending Admin Activation · Contacts Locked</span>';
                 }
               }
+
+              if (quota.is_active) {
+                approvalStatus = 'approved';
+              } else if (quota.approval_status) {
+                approvalStatus = quota.approval_status;
+              }
             }
-          });
+          } catch (e) {}
         }
+
+        renderApprovalWorkflowCard(approvalStatus, isNewUser, biodata?.submitted_at);
+        updateCompulsoryProgress();
       } catch (err) {
         console.warn('Error loading biodata:', err);
       }
@@ -567,7 +958,7 @@
       const oppGender = getOppositeGender();
 
       const selectEl = document.getElementById('prof-gender');
-      if (selectEl) {
+      if (selectEl && currentGender) {
         selectEl.value = currentGender;
       }
 
@@ -584,7 +975,133 @@
 
       const targetSection = document.getElementById(`section-${sectionId}`);
       if (targetSection) targetSection.style.display = 'block';
-      if (tabBtn) tabBtn.classList.add('active');
+      if (tabBtn) {
+        tabBtn.classList.add('active');
+      } else {
+        const foundBtn = document.querySelector(`.tab-btn[onclick*="${sectionId}"]`);
+        if (foundBtn) foundBtn.classList.add('active');
+      }
+    }
+
+    async function handleSubmitForAdminApproval(isResubmit = false) {
+      const evalResult = updateCompulsoryProgress();
+      
+      if (!evalResult.isAllValid) {
+        const missing = evalResult.missingFields;
+        const firstMissing = missing[0];
+
+        // Shake button
+        const submitBtn = document.getElementById('btnSubmitAdminApproval');
+        if (submitBtn) {
+          submitBtn.classList.add('field-compulsory-error');
+          setTimeout(() => submitBtn.classList.remove('field-compulsory-error'), 600);
+        }
+
+        const missingNames = missing.map(m => m.name).join(', ');
+        window.toast.show(`⚠️ Compulsory fields missing (${missing.length}/12): <strong>${missingNames}</strong>`, 'warning', 5000);
+
+        // Switch to the relevant tab and focus the first missing field
+        if (firstMissing) {
+          focusCompulsoryField(firstMissing.id, firstMissing.tab);
+        }
+        return;
+      }
+
+      // All 12 fields are valid! Now proceed to submit for admin approval
+      const submitBtn = document.getElementById('btnSubmitAdminApproval');
+      const origBtnContent = submitBtn ? submitBtn.innerHTML : '';
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<span>Submitting to Admin... ⏳</span>`;
+      }
+
+      window.toast.show('Submitting profile for administrator approval... ⏳', 'info');
+
+      const avatarImg = document.getElementById('profileAvatarImg');
+      let currentPhotoUrl = avatarImg ? avatarImg.src : null;
+
+      // 1. Upload photo if selected
+      if (pendingPhotoData) {
+        try {
+          const photoRes = await saveUserPhotoToApi(pendingPhotoData, pendingPhotoFileName);
+          if (photoRes && photoRes.success && photoRes.photo_url) {
+            currentPhotoUrl = photoRes.photo_url;
+            if (avatarImg) {
+              avatarImg.src = currentPhotoUrl;
+              avatarImg.dataset.isDefault = 'false';
+            }
+            pendingPhotoData = null;
+          }
+        } catch (photoErr) {
+          console.warn('Error uploading photo:', photoErr);
+        }
+      }
+
+      const getVal = (id) => {
+        const el = document.getElementById(id);
+        return el ? el.value.trim() : '';
+      };
+
+      const selectedGender = getVal('prof-gender') || getUserGender();
+
+      const biodata = {
+        full_name: getVal('prof-fullname'),
+        gender: selectedGender,
+        date_of_birth: getVal('prof-dob'),
+        dob: getVal('prof-dob'),
+        marital_status: getVal('prof-marital'),
+        mother_tongue: getVal('prof-tongue'),
+        diet: getVal('prof-diet'),
+        location: getVal('prof-location'),
+        about_me: getVal('prof-about'),
+        highest_qualification: getVal('prof-education'),
+        education: getVal('prof-education'),
+        college: getVal('prof-college'),
+        occupation: getVal('prof-occupation'),
+        company: getVal('prof-employer'),
+        annual_income: getVal('prof-income'),
+        rashi: getVal('prof-rashi'),
+        nakshatra: getVal('prof-nakshatra'),
+        gothram: getVal('prof-gothram'),
+        manglik: getVal('prof-manglik'),
+        pref_age: getVal('pref-age'),
+        pref_height: getVal('pref-height'),
+        pref_education: getVal('pref-education'),
+        pref_locations: getVal('pref-locations'),
+        photo_url: currentPhotoUrl
+      };
+
+      try {
+        const res = await submitProfileForApproval(biodata);
+        if (res && res.success) {
+          setUserGender(selectedGender);
+          updateProfileGenderDisplay();
+          updateHeaderCardDisplays(biodata);
+          renderApprovalWorkflowCard('pending', true, new Date().toISOString());
+          
+          const actEl = document.getElementById('profActivationBadge');
+          if (actEl) {
+            actEl.innerHTML = '<span style="color: #b45309; background: #fef3c7; border: 1px solid #fde68a; padding: 0.15rem 0.5rem; border-radius: var(--radius-full); display: inline-flex; align-items: center; gap: 0.25rem;">⏳ Pending Admin Approval</span>';
+          }
+
+          window.toast.show('🎉 Profile submitted successfully! Forwarded to administrator for review and approval.', 'success', 6000);
+          
+          const card = document.getElementById('profileApprovalCard');
+          if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = origBtnContent;
+          }
+          window.toast.show(res?.error || res?.message || 'Error submitting profile', 'warning', 4000);
+        }
+      } catch (err) {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = origBtnContent;
+        }
+        window.toast.show('Submission error: ' + err.message, 'danger', 4000);
+      }
     }
 
     async function saveProfileChanges() {
@@ -604,7 +1121,10 @@
           const photoRes = await saveUserPhotoToApi(pendingPhotoData, pendingPhotoFileName);
           if (photoRes && photoRes.success && photoRes.photo_url) {
             currentPhotoUrl = photoRes.photo_url;
-            if (avatarImg) avatarImg.src = currentPhotoUrl;
+            if (avatarImg) {
+              avatarImg.src = currentPhotoUrl;
+              avatarImg.dataset.isDefault = 'false';
+            }
             pendingPhotoData = null;
             pendingPhotoFileName = '';
           }
@@ -644,15 +1164,17 @@
         const res = await saveUserBiodataToApi(biodata);
         if (res && res.success) {
           localStorage.setItem('matrimony_profile_completed', 'true');
-          // Persist gender and update UI only after save button succeeds
           setUserGender(selectedGender);
           updateProfileGenderDisplay();
           updateHeaderCardDisplays(biodata);
-          const saveBtnText = document.querySelector('.save-btn-text');
-          if (saveBtnText) saveBtnText.textContent = 'Save Changes';
-          const topbarBadge = document.querySelector('.topbar-badge');
-          if (topbarBadge) topbarBadge.textContent = 'Profile Created';
-          window.toast.show('🎉 Profile created and saved successfully in database!', 'success');
+          updateCompulsoryProgress();
+
+          const isNewUser = isNewUserRestricted();
+          if (isNewUser) {
+            window.toast.show('Draft saved! Click "Submit Profile for Admin Approval" to send to admin.', 'info', 5000);
+          } else {
+            window.toast.show('🎉 Profile updated and saved successfully in database!', 'success');
+          }
         } else {
           window.toast.show(res?.message || 'Error saving changes to database', 'warning');
         }

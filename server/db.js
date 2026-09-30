@@ -170,6 +170,8 @@ async function initDatabase() {
   try {
     await query(`ALTER TABLE user_accounts ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP + INTERVAL '3 months')`);
     await query(`ALTER TABLE user_accounts ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT FALSE`);
+    await query(`ALTER TABLE user_accounts ADD COLUMN IF NOT EXISTS approval_status VARCHAR(50) DEFAULT 'unsubmitted'`);
+    await query(`ALTER TABLE user_accounts ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMP`);
     await query(`ALTER TABLE candidates ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE`);
   } catch (e) {}
   await query(`CREATE INDEX IF NOT EXISTS idx_user_accounts_user ON user_accounts(user_id)`);

@@ -29,6 +29,11 @@ class MatrimonyNavigation {
   }
 
   init() {
+    if (this.activePage !== 'login' && this.activePage !== 'admin') {
+      if (typeof requireAuth === 'function' && !requireAuth()) {
+        return;
+      }
+    }
     this.render();
     this.bindEvents();
     this.restoreState();
@@ -42,7 +47,7 @@ class MatrimonyNavigation {
     const isSubdir = window.location.pathname.includes('/login_page/') || window.location.pathname.includes('/search_page/');
     const prefix = isSubdir ? '../' : '';
 
-    const loggedIn = (typeof isUserLoggedIn === 'function') ? isUserLoggedIn() : (localStorage.getItem('matrimony_is_logged_in') !== 'false');
+    const loggedIn = (typeof isUserLoggedIn === 'function') ? isUserLoggedIn() : (localStorage.getItem('matrimony_is_logged_in') === 'true' && Boolean(localStorage.getItem('matrimony_user_id')));
 
     // Retrieve custom user details if available
     let userBiodata = null;
@@ -162,21 +167,19 @@ class MatrimonyNavigation {
         <!-- Current User Profile Chip -->
         <div class="sidebar-footer">
           <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 0.5rem;">
-            <a href="${loggedIn ? `${prefix}profile.html` : `${prefix}login.html`}" class="user-profile-chip" title="${loggedIn ? 'View Profile' : 'Sign In'}" style="flex: 1; min-width: 0; text-decoration: none;">
+            <a href="${prefix}profile.html" class="user-profile-chip" title="View Profile" style="flex: 1; min-width: 0; text-decoration: none;">
               <div class="avatar-wrapper">
                 <img src="${userPhoto}" alt="${userName}" class="avatar-img">
-                <span class="status-indicator" title="${loggedIn ? 'Online' : 'Offline'}" style="${!loggedIn ? 'background: var(--text-light);' : ''}"></span>
+                <span class="status-indicator" title="Online"></span>
               </div>
               <div class="user-details">
-                <div class="user-name" style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${loggedIn ? userName : 'Guest User'}</div>
-                <div class="user-status">${loggedIn ? 'Member · Online' : 'Click to Sign In'}</div>
+                <div class="user-name" style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${userName}</div>
+                <div class="user-status">Verified Member · Online</div>
               </div>
             </a>
-            ${loggedIn ? `
-              <button type="button" class="btn-sidebar-logout" onclick="logoutUser()" title="Log Out" aria-label="Log Out" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0.45rem; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; transition: all var(--transition-fast);">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-              </button>
-            ` : ''}
+            <button type="button" class="btn-sidebar-logout" onclick="logoutUser()" title="Log Out" aria-label="Log Out" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0.45rem; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; transition: all var(--transition-fast);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            </button>
           </div>
         </div>
       </aside>
@@ -256,7 +259,7 @@ class MatrimonyNavigation {
   updateFooterAuthLinks() {
     const isSubdir = window.location.pathname.includes('/login_page/') || window.location.pathname.includes('/search_page/');
     const prefix = isSubdir ? '../' : '';
-    const loggedIn = (typeof isUserLoggedIn === 'function') ? isUserLoggedIn() : (localStorage.getItem('matrimony_is_logged_in') !== 'false');
+    const loggedIn = (typeof isUserLoggedIn === 'function') ? isUserLoggedIn() : (localStorage.getItem('matrimony_is_logged_in') === 'true' && Boolean(localStorage.getItem('matrimony_user_id')));
 
     document.querySelectorAll('.footer-links a[href*="login.html"], .footer-links a.footer-auth-link').forEach(link => {
       if (loggedIn) {

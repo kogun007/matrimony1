@@ -15,17 +15,27 @@ const PROFILE_VIEW_LIMIT = 75;
 // Maximum validity duration: 3 months from the day user profile is created
 const PROFILE_VALIDITY_MONTHS = 3;
 
-// Helper to extract user identity from headers, query, body, or IP
-function getUserId(req) {
+// Middleware to require authenticated member - guest access is completely disabled
+function requireUserAuth(req, res, next) {
   const user = req.headers['x-user-id'] || req.query.user_id || req.body?.user_id;
-  if (user && typeof user === 'string' && user.trim().length > 0) {
+  if (!user || typeof user !== 'string' || user.trim() === '' || user.trim() === 'user_guest_default' || user.trim().toLowerCase() === 'guest') {
+    return res.status(401).json({
+      success: false,
+      error: 'Authentication required. Guest access is disabled. Please log in.',
+      code: 'AUTH_REQUIRED'
+    });
+  }
+  req.authenticatedUserId = user.trim();
+  next();
+}
+
+// Helper to extract authenticated user identity
+function getUserId(req) {
+  const user = req.authenticatedUserId || req.headers['x-user-id'] || req.query.user_id || req.body?.user_id;
+  if (user && typeof user === 'string' && user.trim().length > 0 && user.trim() !== 'user_guest_default' && user.trim().toLowerCase() !== 'guest') {
     return user.trim();
   }
-  const forwarded = req.headers['x-forwarded-for'];
-  if (forwarded) {
-    return forwarded.split(',')[0].trim();
-  }
-  return req.socket?.remoteAddress || 'user_guest_default';
+  return null;
 }
 
 // Helper to retrieve or initialize user profile account with creation date, 3-month expiration, and activation status
@@ -137,7 +147,7 @@ app.get('/api/health', async (req, res) => {
 
 // 2. Fetch Candidates with Dynamic PostgreSQL Filtering
 // Supports: id, query (name/id), age_max, age_min, height_min, height_max, sub_caste, city, marital_status, gender, verified_only, premium_only, sort
-app.get('/api/candidates', async (req, res) => {
+app.get('/api/candidates', requireUserAuth, async (req, res) => {
   try {
     const {
       id,
@@ -283,7 +293,7 @@ app.get('/api/candidates', async (req, res) => {
 });
 
 // 3. Fetch Single Candidate by ID (Enforces 75 Profile View Limit & Contact Detail Protection)
-app.get('/api/candidates/:id', async (req, res) => {
+app.get('/api/candidates/:id', requireUserAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const userId = getUserId(req);
@@ -377,7 +387,7 @@ app.get('/api/candidates/:id', async (req, res) => {
 });
 
 // 3b. User Profile View Quota & 3-Month Validity Status Endpoint
-app.get('/api/user-quota', async (req, res) => {
+app.get('/api/user-quota', requireUserAuth, async (req, res) => {
   try {
     const userId = getUserId(req);
     const quota = await getUserQuotaDetails(userId);
@@ -391,7 +401,7 @@ app.get('/api/user-quota', async (req, res) => {
 });
 
 // 3c. Reset Profile View Quota & Renew 3-Month Validity (for testing and demo purposes)
-app.post('/api/user-quota/reset', async (req, res) => {
+app.post('/api/user-quota/reset', requireUserAuth, async (req, res) => {
   try {
     const userId = getUserId(req);
     await query('DELETE FROM profile_views WHERE user_id = $1', [userId]);
@@ -421,7 +431,7 @@ app.post('/api/user-quota/reset', async (req, res) => {
 });
 
 // 3d. Simulate View Limit Reached (instantly sets 75 views for evaluation)
-app.post('/api/user-quota/simulate-limit', async (req, res) => {
+app.post('/api/user-quota/simulate-limit', requireUserAuth, async (req, res) => {
   try {
     const userId = getUserId(req);
     await query('DELETE FROM profile_views WHERE user_id = $1', [userId]);
@@ -443,7 +453,7 @@ app.post('/api/user-quota/simulate-limit', async (req, res) => {
 });
 
 // 3e. Simulate 3-Month Validity Expiry (sets profile creation date to 95 days ago)
-app.post('/api/user-quota/simulate-expiry', async (req, res) => {
+app.post('/api/user-quota/simulate-expiry', requireUserAuth, async (req, res) => {
   try {
     const userId = getUserId(req);
     await query(
@@ -470,7 +480,7 @@ app.post('/api/user-quota/simulate-expiry', async (req, res) => {
 });
 
 // 3e. Fetch Recently Viewed Candidate Profiles for the Current User
-app.get('/api/recently-viewed', async (req, res) => {
+app.get('/api/recently-viewed', requireUserAuth, async (req, res) => {
   try {
     const userId = getUserId(req);
     const sql = `
@@ -616,7 +626,7 @@ app.post('/api/candidates', async (req, res) => {
 });
 
 // 7. Save Photo in PostgreSQL Database
-app.post('/api/user-photo', async (req, res) => {
+app.post('/api/user-photo', requireUserAuth, async (req, res) => {
   try {
     const userId = getUserId(req);
     const { photo_data, caption, is_primary = true } = req.body;
@@ -699,7 +709,7 @@ app.get('/api/user-photo/:id', async (req, res) => {
 });
 
 // 9. Fetch All Photos for Current User
-app.get('/api/user-photos', async (req, res) => {
+app.get('/api/user-photos', requireUserAuth, async (req, res) => {
   try {
     const userId = getUserId(req);
     const result = await query(`
@@ -721,7 +731,7 @@ app.get('/api/user-photos', async (req, res) => {
 });
 
 // 10. Add / Update Biodata by User
-app.post('/api/biodata', async (req, res) => {
+app.post('/api/biodata', requireUserAuth, async (req, res) => {
   try {
     const userId = getUserId(req);
     const {
@@ -899,7 +909,7 @@ app.post('/api/biodata', async (req, res) => {
 });
 
 // 11. Fetch Biodata for Current User
-app.get('/api/biodata', async (req, res) => {
+app.get('/api/biodata', requireUserAuth, async (req, res) => {
   try {
     const userId = getUserId(req);
     const result = await query('SELECT * FROM user_biodata WHERE user_id = $1', [userId]);
@@ -1541,7 +1551,7 @@ app.post('/api/admin/candidates/:id/deactivate', checkAdminAuth, async (req, res
 });
 
 // 12l. Toggle Current User Active Status (for quick evaluation / demo)
-app.post('/api/user-quota/toggle-active', async (req, res) => {
+app.post('/api/user-quota/toggle-active', requireUserAuth, async (req, res) => {
   try {
     const userId = getUserId(req);
     const account = await getUserProfileAccount(userId);

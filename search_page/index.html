@@ -543,6 +543,10 @@
 
   <!-- Script for live slider updates and dual button triggers -->
   <script>
+    if (localStorage.getItem('matrimony_is_logged_in') !== 'true') {
+      window.location.replace('../login.html');
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       const ageSlider = document.getElementById('age-slider');
       const ageDisplay = document.getElementById('age-display');

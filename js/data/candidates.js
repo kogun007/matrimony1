@@ -315,6 +315,11 @@ function getOppositeGenderCandidates(candidatesList) {
 
 // Async loader to fetch live data from PostgreSQL API filtered by opposite gender
 async function loadCandidatesFromApi(queryParams = {}) {
+  if (!isUserLoggedIn()) {
+    requireAuth();
+    return [];
+  }
+  const userId = getCurrentUserId();
   try {
     const base = (typeof window !== 'undefined' && window.location.origin) ? window.location.origin : 'http://localhost:3000';
     const url = new URL(`${API_BASE_URL}/candidates`, base);
@@ -322,13 +327,20 @@ async function loadCandidatesFromApi(queryParams = {}) {
     if (!queryParams.gender) {
       queryParams.gender = getOppositeGender();
     }
+    if (userId) {
+      url.searchParams.append('user_id', userId);
+    }
     Object.keys(queryParams).forEach(key => {
       if (queryParams[key] !== undefined && queryParams[key] !== '') {
         url.searchParams.append(key, queryParams[key]);
       }
     });
 
-    const res = await fetch(url);
+    const res = await fetch(url, {
+      headers: {
+        'x-user-id': userId
+      }
+    });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
     
@@ -367,17 +379,49 @@ async function loadCandidatesFromApi(queryParams = {}) {
   return getOppositeGenderCandidates(CANDIDATE_DATABASE);
 }
 
-// Automatically load from API on script load
-loadCandidatesFromApi();
+// Automatically load from API on script load only for authenticated users
+if (typeof window !== 'undefined' && isUserLoggedIn()) {
+  loadCandidatesFromApi();
+}
 
-// User Authentication & Session State Management
+// User Authentication & Session State Management (Guest access removed)
 function isUserLoggedIn() {
   const status = localStorage.getItem('matrimony_is_logged_in');
-  return status !== 'false';
+  const userId = localStorage.getItem('matrimony_user_id');
+  return status === 'true' && Boolean(userId && userId.trim() !== '' && userId.trim() !== 'user_guest_default' && userId.trim().toLowerCase() !== 'guest');
+}
+
+function requireAuth() {
+  if (typeof window === 'undefined') return true;
+  const path = window.location.pathname.toLowerCase();
+  // Allow login pages, admin console, and 404 page without authenticated user session
+  if (path.includes('login') || path.includes('admin') || path.includes('404')) {
+    return true;
+  }
+  if (!isUserLoggedIn()) {
+    const isSubdir = window.location.pathname.includes('/login_page/') || window.location.pathname.includes('/search_page/');
+    const targetUrl = isSubdir ? '../login.html' : 'login.html';
+    window.location.replace(targetUrl);
+    return false;
+  }
+  return true;
+}
+
+// Enforce authentication gate immediately on script load
+if (typeof window !== 'undefined') {
+  requireAuth();
 }
 
 function setUserLoggedIn(loggedIn) {
-  localStorage.setItem('matrimony_is_logged_in', loggedIn ? 'true' : 'false');
+  if (loggedIn) {
+    localStorage.setItem('matrimony_is_logged_in', 'true');
+  } else {
+    localStorage.setItem('matrimony_is_logged_in', 'false');
+    localStorage.removeItem('matrimony_user_id');
+    localStorage.removeItem('matrimony_profile_is_active');
+    localStorage.removeItem('matrimony_user_views_count');
+    localStorage.removeItem('matrimony_viewed_candidate_ids');
+  }
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('userAuthStateChanged', { detail: { isLoggedIn: loggedIn } }));
   }
@@ -385,29 +429,41 @@ function setUserLoggedIn(loggedIn) {
 
 function logoutUser() {
   setUserLoggedIn(false);
+  localStorage.removeItem('matrimony_user_id');
+  localStorage.removeItem('matrimony_profile_is_active');
+  localStorage.removeItem('matrimony_user_views_count');
+  localStorage.removeItem('matrimony_viewed_candidate_ids');
+  localStorage.removeItem('matrimony_user_biodata');
+  localStorage.removeItem('matrimony_user_photo_url');
   if (typeof window !== 'undefined') {
     if (window.toast) {
       window.toast.show('You have logged out successfully. 👋', 'info');
     }
+    const isSubdir = window.location.pathname.includes('/login_page/') || window.location.pathname.includes('/search_page/');
+    const targetUrl = isSubdir ? '../login.html' : 'login.html';
     setTimeout(() => {
-      window.location.href = 'login.html';
-    }, 600);
+      window.location.replace(targetUrl);
+    }, 400);
   }
 }
 
 // User Identity & 75-Profile-View Quota API Connectors
 function getCurrentUserId() {
-  let uid = localStorage.getItem('matrimony_user_id');
-  if (!uid) {
-    uid = 'JAIN-USER-' + Math.floor(1000 + Math.random() * 9000);
-    localStorage.setItem('matrimony_user_id', uid);
+  if (!isUserLoggedIn()) {
+    return '';
   }
-  return uid;
+  const uid = localStorage.getItem('matrimony_user_id');
+  return uid ? uid.trim() : '';
 }
 
 // Fetch single candidate profile with backend view-limit tracking (Max 75 profiles)
 async function fetchCandidateProfileFromApi(candidateId) {
+  if (!isUserLoggedIn()) {
+    requireAuth();
+    return null;
+  }
   const userId = getCurrentUserId();
+  if (!userId) return null;
   try {
     const res = await fetch(`${API_BASE_URL}/candidates/${encodeURIComponent(candidateId)}?user_id=${encodeURIComponent(userId)}`, {
       headers: {
@@ -424,7 +480,9 @@ async function fetchCandidateProfileFromApi(candidateId) {
 
 // Get user's view count, 3-month profile validity and remaining credits
 async function fetchUserQuota() {
+  if (!isUserLoggedIn()) return null;
   const userId = getCurrentUserId();
+  if (!userId) return null;
   try {
     const res = await fetch(`${API_BASE_URL}/user-quota?user_id=${encodeURIComponent(userId)}`, {
       headers: { 'x-user-id': userId }
@@ -697,7 +755,9 @@ function clearRecentlyViewed() {
 
 // Fetch recently viewed profiles directly from PostgreSQL backend
 async function fetchRecentlyViewedFromApi() {
+  if (!isUserLoggedIn()) return [];
   const userId = getCurrentUserId();
+  if (!userId) return [];
   try {
     const res = await fetch(`${API_BASE_URL}/recently-viewed?user_id=${encodeURIComponent(userId)}`, {
       headers: { 'x-user-id': userId }

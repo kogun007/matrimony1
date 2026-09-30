@@ -234,9 +234,17 @@ document.addEventListener('DOMContentLoaded', () => {
         loginBtn.innerHTML = originalText;
         showToast(`Welcome, ${usernameVal}! Sign in successful.`, 'success');
         
+        // Persist authenticated state
+        localStorage.setItem('matrimony_is_logged_in', 'true');
+        localStorage.setItem('matrimony_user_id', usernameVal);
+
         // Refresh captcha for subsequent attempts
         drawCaptcha();
         captchaInput.value = '';
+
+        setTimeout(() => {
+          window.location.href = '../index.html';
+        }, 1200);
       }, 1000);
     }
   });
